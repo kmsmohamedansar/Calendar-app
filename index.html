@@ -1,87 +1,101 @@
 <!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CELPIP Prep Calendar — Mohamed Ansar</title>
-  <meta name="description" content="Interactive daily study calendar for CELPIP 12 exam prep.">
+  <title>CELPIP 12 Prep Calendar — F1 Edition</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Background racetrack lines */
+    body {
+      background: repeating-linear-gradient(
+        to right,
+        #1e1e1e,
+        #1e1e1e 40px,
+        #2d2d2d 40px,
+        #2d2d2d 80px
+      );
+    }
+    /* F1 car animation */
+    .f1-car {
+      position: absolute;
+      top: 20px;
+      left: -100px;
+      width: 80px;
+      animation: drive 12s linear infinite;
+    }
+    @keyframes drive {
+      from { left: -100px; }
+      to { left: 110%; }
+    }
+    /* Checklist aesthetic */
+    input[type="checkbox"] {
+      accent-color: #ef4444; /* Tailwind red-500 */
+      transform: scale(1.2);
+      cursor: pointer;
+    }
+  </style>
 </head>
-<body class="bg-gray-50 text-gray-900">
+<body class="text-gray-100">
+  <!-- F1 Car Animation -->
+  <img src="https://i.ibb.co/3p1nq7s/f1-car.png" alt="F1 Car" class="f1-car">
+
   <!-- Header -->
-  <header class="bg-indigo-700 text-white p-6 shadow-md">
-    <h1 class="text-2xl font-bold">CELPIP 12 Prep Calendar</h1>
-    <p class="text-sm">Aug 26 – Sept 13, 2025 | Target Exam Date: Sept 13</p>
+  <header class="bg-gradient-to-r from-red-600 via-red-500 to-orange-500 text-white p-6 shadow-lg text-center">
+    <h1 class="text-3xl font-bold tracking-wide">CELPIP 12 Prep Calendar 🏎️</h1>
+    <p class="text-sm">Aug 26 – Sept 13, 2025 | Final Lap: Exam Day Sept 13</p>
   </header>
 
-  <!-- Calendar -->
-  <main class="p-6">
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      <!-- Example Day Card -->
-      <div class="bg-white rounded-2xl shadow-lg p-4 hover:shadow-xl transition">
-        <h2 class="text-lg font-semibold text-indigo-700">Aug 26 (Day 1)</h2>
-        <ul class="mt-2 text-sm space-y-1">
-          <li>📝 Writing: Task 1 Email (tone, connectors)</li>
-          <li>🎙 Speaking: 3 prompts (describe, opinion, compare)</li>
-          <li>📖 Reading: 2 passages (inference focus)</li>
-          <li>🎧 Listening: CBC podcast → summarize stance</li>
-        </ul>
-      </div>
-
-      <div class="bg-white rounded-2xl shadow-lg p-4 hover:shadow-xl transition">
-        <h2 class="text-lg font-semibold text-indigo-700">Aug 27</h2>
-        <ul class="mt-2 text-sm space-y-1">
-          <li>📝 Writing: Task 2 Opinion essay</li>
-          <li>🎙 Speaking: 3 prompts (record + critique)</li>
-          <li>📖 Reading: 2 passages → author’s tone</li>
-          <li>🎧 Listening: NPR clip → implied meaning</li>
-        </ul>
-      </div>
-
-      <div class="bg-white rounded-2xl shadow-lg p-4 hover:shadow-xl transition">
-        <h2 class="text-lg font-semibold text-indigo-700">Aug 28</h2>
-        <ul class="mt-2 text-sm space-y-1">
-          <li>📝 Writing: Task 1 Email (timed, 27 mins)</li>
-          <li>🎙 Speaking: 4 prompts (focus: connectors)</li>
-          <li>📖 Reading: Inference drill</li>
-          <li>🎧 Listening: Debate podcast → bias detection</li>
-        </ul>
-      </div>
-
-      <!-- Repeat cards for each date... -->
-      
-      <div class="bg-white rounded-2xl shadow-lg p-4 hover:shadow-xl transition">
-        <h2 class="text-lg font-semibold text-indigo-700">Sept 7 (Mock Test)</h2>
-        <ul class="mt-2 text-sm space-y-1">
-          <li>✅ Full CELPIP Mock (all 4 skills)</li>
-          <li>📊 Review & error log</li>
-        </ul>
-      </div>
-
-      <div class="bg-white rounded-2xl shadow-lg p-4 hover:shadow-xl transition">
-        <h2 class="text-lg font-semibold text-indigo-700">Sept 10</h2>
-        <ul class="mt-2 text-sm space-y-1">
-          <li>✅ Mini Mock (Writing + Speaking)</li>
-          <li>📖 Reading: 2 passages</li>
-          <li>🎧 Listening: test clips</li>
-        </ul>
-      </div>
-
-      <div class="bg-white rounded-2xl shadow-lg p-4 hover:shadow-xl transition border-2 border-green-500">
-        <h2 class="text-lg font-semibold text-green-700">Sept 13 (Exam Day)</h2>
-        <ul class="mt-2 text-sm space-y-1">
-          <li>⚡ Light warm-up only</li>
-          <li>🎙 2 short speaking warm-ups</li>
-          <li>📖 Review connectors & vocab</li>
-          <li>💤 Rest & hydrate</li>
-        </ul>
-      </div>
+  <!-- Calendar Grid -->
+  <main class="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    
+    <!-- Example Day -->
+    <div class="bg-white/10 backdrop-blur-md rounded-2xl shadow-lg p-4 hover:scale-105 transition transform duration-300" id="day-aug26">
+      <h2 class="text-lg font-semibold text-red-400">Aug 26 (Day 1)</h2>
+      <ul class="mt-3 space-y-2 text-sm">
+        <li><label><input type="checkbox" class="task"> 📝 Writing: Task 1 Email</label></li>
+        <li><label><input type="checkbox" class="task"> 🎙 Speaking: 3 prompts</label></li>
+        <li><label><input type="checkbox" class="task"> 📖 Reading: 2 passages</label></li>
+        <li><label><input type="checkbox" class="task"> 🎧 Listening: CBC podcast</label></li>
+      </ul>
     </div>
+
+    <!-- Another Day -->
+    <div class="bg-white/10 rounded-2xl shadow-lg p-4 hover:scale-105 transition transform duration-300" id="day-sept7">
+      <h2 class="text-lg font-semibold text-yellow-400">Sept 7 (Mock Test)</h2>
+      <ul class="mt-3 space-y-2 text-sm">
+        <li><label><input type="checkbox" class="task"> ✅ Full CELPIP Mock (all skills)</label></li>
+        <li><label><input type="checkbox" class="task"> 📊 Review & error log</label></li>
+      </ul>
+    </div>
+
+    <!-- Exam Day -->
+    <div class="bg-white/10 rounded-2xl shadow-lg p-4 border-2 border-green-500 hover:scale-105 transition transform duration-300" id="day-sept13">
+      <h2 class="text-lg font-semibold text-green-400">Sept 13 (Exam Day)</h2>
+      <ul class="mt-3 space-y-2 text-sm">
+        <li><label><input type="checkbox" class="task"> ⚡ Light warm-up only</label></li>
+        <li><label><input type="checkbox" class="task"> 🎙 2 short speaking warm-ups</label></li>
+        <li><label><input type="checkbox" class="task"> 📖 Review connectors</label></li>
+        <li><label><input type="checkbox" class="task"> 💧 Rest & hydrate</label></li>
+      </ul>
+    </div>
+
   </main>
 
   <!-- Footer -->
-  <footer class="text-center text-sm text-gray-600 mt-8 mb-4">
-    © 2025 Mohamed Ansar | Built with Tailwind CSS
+  <footer class="text-center text-gray-400 text-sm mt-10 mb-4">
+    © 2025 Mohamed Ansar | Built F1 Style with Tailwind 🚀
   </footer>
+
+  <!-- JS for saving checklist progress -->
+  <script>
+    document.querySelectorAll('.task').forEach((checkbox, i) => {
+      const key = "task-" + i;
+      checkbox.checked = localStorage.getItem(key) === "true";
+      checkbox.addEventListener("change", () => {
+        localStorage.setItem(key, checkbox.checked);
+      });
+    });
+  </script>
 </body>
 </html>
