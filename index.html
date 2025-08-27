@@ -1,1039 +1,1497 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!--
-    =====================================================================
-    CELPIP 12 Prep Tracker — IMAX Edition (Premium Single-File Web App)
-    Author: Mohamed Ansar (with ChatGPT-5 Thinking)
-    Date: 2025-08-26
+  <!-- ===================================================================================
+       CELPIP 12 PREP TRACKER — IMAX EDITION
+       Premium, futuristic study dashboard with TailwindCSS, glassmorphism, neon glow,
+       animated gradients, progress tracking, streaks, calendar, notes, quotes, confetti,
+       and full localStorage persistence. Vertical scroll layout with a sticky sidebar.
 
-    ✨ What you get:
-      - TailwindCSS-powered, neon-glass aesthetic
-      - Sidebar navigation (Dashboard, Tasks, Calendar, Progress, Notes, Settings)
-      - Animated gradient background + neon glow + glassmorphism
-      - Global progress bar + circular progress meter
-      - Streak tracker (🔥 consecutive days completed)
-      - Statistics dashboard + mini bar chart (pure CSS/JS)
-      - Color-coded monthly calendar for Aug–Sept 2025 (Writing/Speaking/Reading/Mock/Exam)
-      - Notes/Journal with auto-save + "Save to log" (history timeline)
-      - Motivational quotes (30+) with smooth fade transition
-      - Confetti + sparkles + optional sound when a day is completed / 100% overall
-      - Robust localStorage persistence (per-task keys, per-day completion, settings)
-      - Vertical scroll layout; links jump with smooth scroll
-      - Fully commented to be extendable (~1000+ lines)
+       Author: Mohamed Ansar (dashboard built with ChatGPT)
+       Date: 2025-08-26
 
-    🧠 How it persists:
-      - localStorage keys (prefix "celpip-"):
-          - "tasks": { "<date>#<index>": true/false, ... }
-          - "dayDone": { "<date>": true/false, ... }
-          - "streak": integer
-          - "journal": string
-          - "journalHistory": [ { ts, text }, ... ]
-          - "settings": { sound: bool, confetti: bool, theme: "dark"|"light" }
-          - "skillBreakdown": { writing: %, speaking: %, reading: %, mock: % } (derived)
-          - "dailyPct": { "<date>": 0..100 } (for progress chart)
+       NOTES:
+       - This file is intentionally verbose (~1000+ lines) with comments to be easy to extend.
+       - No external backend. Everything persists in localStorage.
+       - TailwindCSS is loaded via CDN. All styling is Tailwind + a touch of custom CSS.
+       - Confetti + mini charts are pure JS/CSS (no libraries).
+  ===================================================================================== -->
 
-    🔧 Notes:
-      - No backend. Pure HTML/CSS/JS + Tailwind CDN.
-      - Mobile-friendly; sidebar collapses into a top bar with a hamburger toggle.
-      - You can safely edit text/tasks/dates; keys derive from data attributes.
-    =====================================================================
-  -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>CELPIP 12 Prep Tracker — IMAX Edition</title>
 
-  <!-- TailwindCSS CDN -->
+  <!-- TailwindCSS CDN (no plugins) -->
   <script src="https://cdn.tailwindcss.com"></script>
 
+  <!-- Tailwind config (inline). We keep it minimal and rely on default theme. -->
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          boxShadow: {
+            'neon': '0 0 25px rgba(34,211,238,0.35)',      /* cyan glow */
+            'neon-pink': '0 0 25px rgba(244,114,182,0.35)',/* pink glow */
+            'neon-green': '0 0 25px rgba(74,222,128,0.35)',/* green glow */
+            'neon-yellow': '0 0 25px rgba(250,204,21,0.35)'/* yellow glow */
+          },
+          keyframes: {
+            gradientBG: {
+              '0%':   { backgroundPosition: '0% 50%' },
+              '50%':  { backgroundPosition: '100% 50%' },
+              '100%': { backgroundPosition: '0% 50%' }
+            },
+            floaty: {
+              '0%,100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-6px)' }
+            },
+            fadeInUp: {
+              '0%': { opacity: 0, transform: 'translateY(20px)' },
+              '100%': { opacity: 1, transform: 'translateY(0)' }
+            }
+          },
+          animation: {
+            'gradientBG': 'gradientBG 20s ease infinite',
+            'floaty': 'floaty 4s ease-in-out infinite',
+            'fadeInUp': 'fadeInUp .8s ease forwards'
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- ===================================================================================
+       CUSTOM CSS
+       - Background animation & global look
+       - Glassmorphism cards
+       - Progress circle visuals
+       - Sidebar styling
+       - Tooltips
+       - Mini chart styles
+  ===================================================================================== -->
   <style>
-    /* ================================================================
-       GLOBAL BACKGROUND, TYPOGRAPHY, AND ANIMATIONS
-       ================================================================ */
-    :root{
-      --neon-cyan: #05f0ff;
-      --neon-pink: #ff56ff;
-      --neon-lime: #a3ff12;
-      --neon-yellow: #ffe871;
-      --glass-bg: rgba(255, 255, 255, 0.08);
-      --glass-border: rgba(255, 255, 255, 0.2);
+    /* ------------------------------
+       GLOBAL BACKGROUND & FONT
+       - Animated multi-stop gradient
+       - Smooth scroll for anchor links
+    -------------------------------*/
+    html, body {
+      height: 100%;
+      scroll-behavior: smooth; /* smooth anchor scrolling for sidebar links */
     }
-
-    html {
-      scroll-behavior: smooth; /* Smooth scroll for anchor links */
-    }
-
     body {
       margin: 0;
       min-height: 100vh;
       background: linear-gradient(-45deg, #0f0c29, #302b63, #24243e, #1b2735);
       background-size: 400% 400%;
       animation: gradientBG 20s ease infinite;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif;
       color: #f8fafc;
-      overflow-x: hidden; /* avoid horizontal scrollbars */
     }
-
     @keyframes gradientBG {
       0% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
       100% { background-position: 0% 50%; }
     }
 
-    /* ================================================================
-       REUSABLE GLASS CARD + NEON GLOW
-       ================================================================ */
+    /* ------------------------------
+       GLASSMORPHIC CARDS
+       - Subtle transparency + blur
+       - Gentle hover lift + neon shadow
+    -------------------------------*/
     .card {
-      background: var(--glass-bg);
+      background: rgba(255, 255, 255, 0.08);
       backdrop-filter: blur(12px);
-      border: 1px solid var(--glass-border);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
       border-radius: 1rem;
-      transition: transform .35s ease, box-shadow .35s ease, border-color .35s ease;
-      opacity: 0;
-      transform: translateY(24px);
-      animation: fadeInUp .7s forwards;
+      transition: all 0.35s ease;
+      opacity: 0;                    /* hidden before fade in */
+      transform: translateY(16px);   /* small offset for entrance anim */
+    }
+    .card.show {
+      opacity: 1;
+      transform: translateY(0);
     }
     .card:hover {
       transform: translateY(-6px) scale(1.02);
-      box-shadow: 0 0 28px rgba(0, 255, 255, 0.28), 0 0 6px rgba(255, 86, 255, 0.25);
-      border-color: rgba(255, 255, 255, 0.35);
-    }
-    @keyframes fadeInUp {
-      to { opacity: 1; transform: translateY(0); }
+      box-shadow: 0 0 30px rgba(0, 255, 255, 0.28);
     }
 
-    /* Neon text glow for headings */
+    /* ------------------------------
+       NEON TEXT SHADOW UTILITY
+    -------------------------------*/
     .neon {
-      text-shadow: 0 0 6px var(--neon-cyan), 0 0 12px var(--neon-cyan), 0 0 22px var(--neon-cyan);
+      text-shadow:
+        0 0 4px rgba(34,211,238,0.65),
+        0 0 12px rgba(34,211,238,0.35);
     }
 
-    /* ================================================================
-       TOOLTIPS (pure CSS)
-       Add data-tip="..." on elements to show tooltip on hover/focus
-       ================================================================ */
-    [data-tip] {
-      position: relative;
+    /* ------------------------------
+       PROGRESS CIRCLE
+       - We rotate the ring so 0% starts at the top.
+    -------------------------------*/
+    .progress-ring {
+      transform: rotate(-90deg);
+      display: block;
     }
-    [data-tip]:hover::after,
-    [data-tip]:focus::after {
-      content: attr(data-tip);
-      position: absolute;
-      top: -38px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0,0,0,.7);
-      color: #e5e7eb;
-      padding: 6px 10px;
-      font-size: 12px;
-      border-radius: 8px;
-      white-space: nowrap;
-      pointer-events: none;
-      opacity: 1;
+    .progress-ring__circle {
+      transition: stroke-dashoffset 0.35s ease, stroke 0.35s ease;
+      transform-origin: center;
     }
-    [data-tip]::after { opacity: 0; transition: opacity .2s; }
 
-    /* ================================================================
-       PROGRESS CIRCLE (SVG stroke-dashoffset animation)
-       ================================================================ */
-    .progress-ring { transform: rotate(-90deg); }
-    .progress-ring__circle { transition: .4s stroke-dasharray; transform-origin: center; }
-
-    /* ================================================================
-       CHECKBOX - slightly larger with accent color
-       ================================================================ */
+    /* ------------------------------
+       CHECKBOX ENHANCEMENT
+       - Native accent color + scale for easier tapping
+    -------------------------------*/
     input[type="checkbox"] {
       accent-color: #06b6d4; /* cyan */
-      transform: scale(1.15);
+      transform: scale(1.2);
       cursor: pointer;
     }
 
-    /* ================================================================
-       SIDEBAR (fixed left on desktop, collapsible on mobile)
-       ================================================================ */
-    .sidebar {
-      position: fixed;
-      inset: 0 auto 0 0;
-      width: 280px;
-      padding: 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      background: linear-gradient(180deg, rgba(15, 12, 41, .75), rgba(36, 36, 62, .6));
-      border-right: 1px solid rgba(255,255,255,.08);
-      backdrop-filter: blur(10px);
-      z-index: 50;
-    }
-    .sidebar a {
-      border-radius: 12px;
-      padding: 10px 12px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      color: #cbd5e1;
-      transition: background .25s, transform .2s, color .25s, box-shadow .25s;
-    }
-    .sidebar a:hover {
-      background: rgba(255,255,255,.06);
-      color: #fff;
-      transform: translateX(3px);
-      box-shadow: 0 0 16px rgba(5, 240, 255, 0.18);
-    }
-    .sidebar a.active {
-      background: rgba(5, 240, 255, 0.14);
-      color: #fff;
-      box-shadow: inset 0 0 0 1px rgba(5, 240, 255, 0.35), 0 0 24px rgba(5, 240, 255, 0.25);
-    }
-
-    /* Mobile sidebar overlay (hidden by default) */
-    .sidebar-mobile {
-      display: none;
-    }
-    @media (max-width: 1024px) {
-      .sidebar { display: none; }
-      .sidebar-mobile {
-        display: flex;
-        position: sticky;
-        top: 0;
-        z-index: 40;
-        background: linear-gradient(90deg, rgba(15, 12, 41, .9), rgba(36,36,62,.8));
-        backdrop-filter: blur(10px);
-        border-bottom: 1px solid rgba(255,255,255,.08);
-      }
-    }
-
-    /* ================================================================
-       LAYOUT OFFSETS:
-       main content gets left margin to avoid going under sidebar
-       ================================================================ */
-    .content {
-      margin-left: 300px; /* 280 + spacing */
-      padding-left: 12px;
-    }
-    @media (max-width: 1024px){
-      .content { margin-left: 0; padding-left: 0; }
-    }
-
-    /* ================================================================
-       TOP GLOBAL PROGRESS BAR
-       ================================================================ */
-    .top-progress-wrap {
+    /* ------------------------------
+       STICKY TOP PROGRESS BAR (global)
+    -------------------------------*/
+    .top-progress-container {
       position: sticky;
       top: 0;
-      z-index: 30;
-      background: rgba(0,0,0,.15);
-      backdrop-filter: blur(6px);
-      border-bottom: 1px solid rgba(255,255,255,.08);
-    }
-    .top-progress {
-      height: 6px;
-      width: 0%;
-      transition: width .5s ease;
-      background: linear-gradient(90deg, var(--neon-cyan), var(--neon-pink));
+      z-index: 40;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
 
-    /* ================================================================
-       SIMPLE PULSE ANIMATION (for icons/labels)
-       ================================================================ */
-    .pulse {
-      animation: pulse 2s infinite;
+    /* ------------------------------
+       SIDEBAR NAV
+       - Fixed on desktop; collapsible on mobile
+    -------------------------------*/
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      height: 100vh;
+      width: 260px;
+      padding: 18px 14px;
+      background: rgba(255,255,255,0.06);
+      border-right: 1px solid rgba(255,255,255,0.12);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      z-index: 45;
+      transform: translateX(0);
+      transition: transform .3s ease;
     }
-    @keyframes pulse {
-      0%, 100% { opacity: .9; }
-      50%      { opacity: 1;  }
+    .sidebar.hidden {
+      transform: translateX(-105%);
+    }
+    .sidebar a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      border-radius: 10px;
+      transition: background .2s ease, transform .2s ease, box-shadow .2s ease;
+    }
+    .sidebar a:hover {
+      background: rgba(255, 255, 255, 0.08);
+      transform: translateX(2px);
+      box-shadow: 0 0 14px rgba(34,211,238,0.15);
+    }
+    .sidebar a.active {
+      background: linear-gradient(90deg, rgba(34,211,238,0.2), rgba(244,114,182,0.2));
+      box-shadow: 0 0 16px rgba(244,114,182,0.25), inset 0 0 0 1px rgba(255,255,255,0.1);
     }
 
-    /* ================================================================
-       MINI BAR CHART styling (Progress section)
-       ================================================================ */
-    .bar {
-      width: 14px;
-      border-radius: 6px;
-      background: linear-gradient(180deg, rgba(5,240,255,.9), rgba(255,86,255,.8));
-      box-shadow: 0 0 12px rgba(5,240,255,.24), 0 0 6px rgba(255,86,255,.18) inset;
-      transition: height .6s ease;
+    /* ------------------------------
+       CONTENT LAYOUT SHIFT
+       - Leaves space for sidebar on desktop
+    -------------------------------*/
+    .content {
+      margin-left: 260px; /* width of sidebar */
     }
-    .bar:hover {
-      box-shadow: 0 0 16px rgba(5,240,255,.35), 0 0 10px rgba(255,86,255,.28) inset;
-      transform: translateY(-2px);
+    @media (max-width: 1024px) {
+      .content { margin-left: 0; }
+      .sidebar { transform: translateX(-105%); }
     }
 
-    /* ================================================================
-       CALENDAR day hover glow + tooltip
-       ================================================================ */
-    .cal-day {
-      border-radius: 12px; padding: 10px 0;
-      transition: transform .2s, box-shadow .2s, filter .2s;
+    /* ------------------------------
+       MOBILE TOPBAR (hamburger)
+    -------------------------------*/
+    .mobile-topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(0,0,0,0.35);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+    }
+
+    /* ------------------------------
+       TOOLTIP (pure CSS)
+    -------------------------------*/
+    .has-tooltip {
       position: relative;
     }
-    .cal-day:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 0 16px rgba(255,255,255,.15);
-      filter: brightness(1.08);
-    }
-    .cal-day[data-title]:hover::after {
-      content: attr(data-title);
+    .has-tooltip .tooltip {
       position: absolute;
-      bottom: 110%;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(0,0,0,.7);
+      bottom: 130%;
+      background: rgba(0,0,0,0.8);
       color: #e5e7eb;
       padding: 6px 10px;
-      font-size: 12px;
       border-radius: 8px;
+      font-size: 12px;
       white-space: nowrap;
+      opacity: 0;
       pointer-events: none;
+      transition: opacity .2s ease, transform .2s ease;
+    }
+    .has-tooltip:hover .tooltip {
+      opacity: 1;
+      transform: translateX(-50%) translateY(-2px);
     }
 
-    /* ================================================================
-       QUOTE FADE-IN
-       ================================================================ */
-    .fade {
-      animation: fade .45s ease;
+    /* ------------------------------
+       MINI BAR CHART (progress history)
+       - Bars displayed inline with equal width
+    -------------------------------*/
+    .bars {
+      display: grid;
+      grid-template-columns: repeat(14, minmax(10px, 1fr)); /* last 14 points */
+      gap: 6px;
+      align-items: end;
+      height: 140px;
+      width: 100%;
     }
-    @keyframes fade { from { opacity: .1; } to { opacity: 1; } }
-
-    /* ================================================================
-       BADGE styling for Day Completed
-       ================================================================ */
-    .badge {
-      display: inline-block;
-      padding: 6px 12px;
-      border-radius: 9999px;
-      font-weight: 700;
-      border: 1px solid rgba(255,255,255,.3);
-      box-shadow: 0 0 18px rgba(163,255,18,.28);
-      background: rgba(163,255,18,.1);
-      color: #bbf7d0;
+    .bar {
+      background: linear-gradient(180deg, rgba(34,211,238,0.9), rgba(244,114,182,0.55));
+      border-radius: 8px 8px 2px 2px;
+      transition: height .35s ease, box-shadow .2s ease;
+      box-shadow: 0 0 12px rgba(34,211,238,0.25);
+    }
+    .bar:hover {
+      box-shadow: 0 0 16px rgba(244,114,182,0.35);
     }
 
-    /* ================================================================
-       THEME TOGGLE (light mode minimal)
-       ================================================================ */
-    .light body { color: #0b1220; }
+    /* ------------------------------
+       QUOTE FADE ANIM
+    -------------------------------*/
+    .fade-enter { opacity: 0; transform: translateY(6px); }
+    .fade-enter-active { opacity: 1; transform: translateY(0); transition: opacity .35s ease, transform .35s ease; }
+
+    /* ------------------------------
+       “DAY COMPLETED” BADGE
+    -------------------------------*/
+    .complete-badge {
+      display: none;
+    }
+    .complete-badge.show {
+      display: block;
+      animation: fadeInUp .4s ease both;
+    }
+
+    /* Small helper to visually separate big sections more on huge screens */
+    .section-gap { padding-top: 2rem; padding-bottom: 2rem; }
   </style>
 </head>
-<body>
-  <!-- ================================================================
-       MOBILE TOP BAR (Sidebar collapsed)
-       ================================================================ -->
-  <div class="sidebar-mobile items-center justify-between px-4 py-3">
-    <div class="flex items-center gap-3">
-      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-fuchsia-500 shadow-lg"></div>
-      <span class="font-semibold tracking-wide">CELPIP IMAX</span>
-    </div>
-    <div class="flex items-center gap-2">
-      <a href="#dashboard" class="px-3 py-1 rounded hover:bg-white/10">Dashboard</a>
-      <a href="#tasks" class="px-3 py-1 rounded hover:bg-white/10">Tasks</a>
-      <a href="#calendar" class="px-3 py-1 rounded hover:bg-white/10">Calendar</a>
-      <a href="#progress" class="px-3 py-1 rounded hover:bg-white/10">Progress</a>
-      <a href="#notes" class="px-3 py-1 rounded hover:bg-white/10">Notes</a>
-      <a href="#settings" class="px-3 py-1 rounded hover:bg-white/10">Settings</a>
-    </div>
+<body class="selection:bg-cyan-500 selection:text-black">
+
+  <!-- ===================================================================================
+       MOBILE TOPBAR (hamburger toggles sidebar on small screens)
+  ===================================================================================== -->
+  <div class="mobile-topbar lg:hidden flex items-center justify-between px-4 py-3">
+    <button id="openSidebarBtn" class="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition">
+      <!-- Simple hamburger -->
+      <span class="sr-only">Open Menu</span>
+      <div class="space-y-1">
+        <div class="w-6 h-0.5 bg-cyan-300"></div>
+        <div class="w-6 h-0.5 bg-cyan-300"></div>
+        <div class="w-6 h-0.5 bg-cyan-300"></div>
+      </div>
+    </button>
+    <div class="text-sm text-gray-300">Menu</div>
+    <div class="w-8"></div>
   </div>
 
-  <!-- ================================================================
-       DESKTOP SIDEBAR NAV
-       ================================================================ -->
-  <aside class="sidebar">
-    <!-- Logo / Title -->
-    <div class="flex items-center gap-3 mb-2">
-      <!-- Simple inline SVG icon -->
-      <svg width="30" height="30" viewBox="0 0 24 24" class="text-cyan-400 drop-shadow" fill="none" stroke="currentColor" stroke-width="1.4">
-        <circle cx="12" cy="12" r="9" stroke="currentColor"></circle>
-        <path d="M12 7v10M7 12h10" />
-      </svg>
+  <!-- ===================================================================================
+       SIDEBAR NAVIGATION (sticky, glassy, neon)
+       - Vertical scroll layout, anchors to sections:
+         Dashboard, Tasks, Calendar, Progress, Notes, Settings
+  ===================================================================================== -->
+  <aside id="sidebar" class="sidebar hidden lg:block">
+    <div class="flex items-center gap-3 px-2 mb-4">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400/60 to-fuchsia-400/60 animate-floaty shadow-neon"></div>
       <div>
-        <div class="text-white font-bold tracking-wide">CELPIP IMAX</div>
-        <div class="text-xs text-slate-400">Study Dashboard</div>
+        <p class="text-sm text-gray-300">CELPIP 12</p>
+        <p class="text-lg font-bold bg-gradient-to-r from-cyan-300 to-fuchsia-300 bg-clip-text text-transparent">IMAX Tracker</p>
       </div>
     </div>
 
-    <!-- Nav Links -->
-    <a href="#dashboard" class="navlink active" data-tip="Overview & Readiness">
-      <!-- Icon -->
-      <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-      Dashboard
-    </a>
-    <a href="#tasks" class="navlink" data-tip="Daily study plan">
-      <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M7 5h14v2H7V5m0 4h14v2H7V9m0 4h14v2H7v-2M3 5h2v2H3V5m0 4h2v2H3V9m0 4h2v2H3v-2z"/></svg>
-      Tasks
-    </a>
-    <a href="#calendar" class="navlink" data-tip="Plan by dates">
-      <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v12c0 1.11.9 2 2 2h14c1.11 0 2-.89 2-2V6c0-1.1-.89-2-2-2m0 14H5V9h14v9z"/></svg>
-      Calendar
-    </a>
-    <a href="#progress" class="navlink" data-tip="Detailed stats">
-      <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M3 3v18h18v-2H5V3H3m8 5v8h2V8h-2m6 3v5h2v-5h-2M5 14v2h2v-2H5z"/></svg>
-      Progress
-    </a>
-    <a href="#notes" class="navlink" data-tip="Journal & reflections">
-      <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M19,21H7A2,2 0 0,1 5,19V5A2,2 0 0,1 7,3H19A2,2 0 0,1 21,5V19A2,2 0 0,1 19,21M19,5H7V19H19V5Z" /></svg>
-      Notes
-    </a>
-    <a href="#settings" class="navlink" data-tip="Preferences">
-      <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M12 8a4 4 0 1 0 4 4a4.004 4.004 0 0 0-4-4Zm8.94 4.66l1.06-1.64l-2.24-3.88l-1.92.56A7.946 7.946 0 0 0 16 5.24l-.28-2H8.28l-.28 2a7.946 7.946 0 0 0-1.8 1.46l-1.92-.56L2.04 11l1.06 1.64c-.06.44-.1.9-.1 1.36s.04.92.1 1.36L2.04 17l2.24 3.88l1.92-.56c.56.56 1.16 1.04 1.8 1.46l.28 2h7.44l.28-2c.64-.42 1.24-.9 1.8-1.46l1.92.56L22 17l-1.06-1.64c.06-.44.1-.9.1-1.36s-.04-.92-.1-1.36Z"/></svg>
-      Settings
-    </a>
+    <nav class="mt-4">
+      <a href="#dashboard" data-link="dashboard" class="active">
+        <span>🏠</span><span>Dashboard</span>
+      </a>
+      <a href="#tasks" data-link="tasks">
+        <span>🗓️</span><span>Daily Plan</span>
+      </a>
+      <a href="#calendar" data-link="calendar">
+        <span>📆</span><span>Calendar</span>
+      </a>
+      <a href="#progress" data-link="progress">
+        <span>📊</span><span>Progress</span>
+      </a>
+      <a href="#notes" data-link="notes">
+        <span>📝</span><span>Notes</span>
+      </a>
+      <a href="#settings" data-link="settings">
+        <span>⚙️</span><span>Settings</span>
+      </a>
+    </nav>
 
-    <!-- Tiny helper text -->
-    <div class="mt-3 text-xs text-slate-400">
-      Tip: Hover icons for tooltips • Click sections to jump
+    <!-- Tiny footer inside sidebar -->
+    <div class="absolute bottom-4 left-0 right-0 text-center text-[12px] text-gray-400">
+      <p>© 2025 Mohamed Ansar</p>
+      <p class="text-gray-500">IMAX Prep Mode 🚀</p>
     </div>
   </aside>
 
-  <!-- ================================================================
-       TOP GLOBAL PROGRESS BAR (sticky)
-       ================================================================ -->
-  <div class="top-progress-wrap">
-    <div id="topProgressBar" class="top-progress"></div>
-  </div>
-
-  <!-- ================================================================
-       MAIN CONTENT AREA (offset for desktop sidebar)
-       ================================================================ -->
+  <!-- ===================================================================================
+       CONTENT WRAPPER (leaves space for sidebar on desktop)
+  ===================================================================================== -->
   <main class="content">
-    <!-- ============================================================
-         HEADER / HERO
-         ============================================================ -->
-    <header class="text-center py-12 px-6">
+
+    <!-- ===============================================================================
+         HEADER: Title + dates
+    ================================================================================ -->
+    <header id="top" class="text-center pt-10 pb-6 section-gap">
       <h1 class="text-5xl font-extrabold bg-gradient-to-r from-cyan-400 to-fuchsia-400 bg-clip-text text-transparent neon">
         CELPIP 12 Prep Tracker
       </h1>
       <p class="text-gray-300 mt-3 text-lg">Aug 26 – Sept 13, 2025 • One Module per Day 🎯</p>
-      <p class="text-gray-400 text-sm mt-1">Designed for deep focus, consistent streaks, and delightful progress.</p>
     </header>
 
-    <!-- ============================================================
-         DASHBOARD (Readiness circle + streak + quick stats + quotes)
-         ============================================================ -->
-    <section id="dashboard" class="px-6 pb-12 space-y-12">
+    <!-- ===============================================================================
+         TOP PROGRESS BAR (sticky)
+         - Reflects overall % of all tasks checked
+    ================================================================================ -->
+    <div class="top-progress-container w-full">
+      <div class="w-full h-3 bg-white/10 rounded-full overflow-hidden">
+        <div id="top-progress-bar" class="h-3 bg-gradient-to-r from-cyan-400 to-fuchsia-400 transition-all duration-500" style="width:0%"></div>
+      </div>
+    </div>
+
+    <!-- ===============================================================================
+         DASHBOARD SECTION
+         - Exam readiness progress circle
+         - Streak tracker
+         - Three stat tiles
+         - Motivational quotes (random + fade)
+    ================================================================================ -->
+    <section id="dashboard" class="p-6 md:p-10 space-y-12 section-gap">
       <!-- Progress Circle -->
       <div class="flex justify-center items-center relative">
-        <!-- The base ring and the animated foreground ring -->
-        <svg class="progress-ring w-56 h-56" viewBox="0 0 120 120" aria-hidden="true">
-          <circle class="text-gray-800" stroke="currentColor" stroke-width="12" fill="transparent" r="54" cx="60" cy="60"/>
-          <circle id="progressRing" class="progress-ring__circle text-cyan-400" stroke="currentColor" stroke-width="12" stroke-linecap="round" fill="transparent" r="54" cx="60" cy="60"
+        <svg class="progress-ring w-56 h-56" viewBox="0 0 120 120">
+          <!-- Track -->
+          <circle class="text-gray-800/70" stroke="currentColor" stroke-width="12" fill="transparent" r="54" cx="60" cy="60"/>
+          <!-- Animated progress -->
+          <circle class="progress-ring__circle text-cyan-400" stroke="currentColor" stroke-width="12" stroke-linecap="round" fill="transparent" r="54" cx="60" cy="60"
                   stroke-dasharray="0 339.292"/>
         </svg>
-        <!-- Text inside the circle (readiness %) -->
         <div class="absolute text-center">
-          <p id="progressText" class="text-4xl font-black">0%</p>
-          <p class="text-sm text-gray-300">Exam Readiness</p>
+          <p class="text-5xl font-extrabold" id="progress-text">0%</p>
+          <p class="text-sm text-gray-300 tracking-wide">Exam Readiness</p>
         </div>
       </div>
 
-      <!-- Quick Stats + Streak -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 max-w-6xl mx-auto">
-        <!-- Streak -->
-        <div class="card p-6 text-center">
+      <!-- Streak + Stats -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-6xl mx-auto">
+        <!-- Streak Tracker -->
+        <div class="card p-6 text-center shadow-neon show">
           <h2 class="text-xl font-semibold text-cyan-300">🔥 Study Streak</h2>
-          <p id="streakCounter" class="text-4xl font-black mt-3">0 days</p>
-          <p class="text-sm text-gray-400">Consecutive days with all tasks done</p>
+          <p class="text-4xl font-extrabold mt-3" id="streak-counter">0 days</p>
+          <p class="text-sm text-gray-400">Consecutive days with all tasks completed</p>
+          <div class="mt-4 flex justify-center gap-1" id="streak-dots" aria-label="Streak dots"></div>
         </div>
-        <!-- Tasks Completed -->
-        <div class="card p-6 text-center">
-          <h3 class="text-lg font-semibold text-fuchsia-300">Tasks Completed</h3>
-          <p id="tasksCompleted" class="text-4xl font-black mt-2">0</p>
-          <p class="text-xs text-gray-400">Out of all tasks in the plan</p>
-        </div>
-        <!-- Days Left -->
-        <div class="card p-6 text-center">
-          <h3 class="text-lg font-semibold text-cyan-300">Days Left</h3>
-          <p id="daysLeft" class="text-4xl font-black mt-2">0</p>
-          <p class="text-xs text-gray-400">Until exam day</p>
-        </div>
-        <!-- Overall Progress -->
-        <div class="card p-6 text-center">
-          <h3 class="text-lg font-semibold text-green-300">Overall Progress</h3>
-          <p id="overallProgress" class="text-4xl font-black mt-2">0%</p>
-          <p class="text-xs text-gray-400">Across all tasks</p>
+
+        <!-- Statistics Cards (Tasks, Days Left, Overall %) -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div class="card p-6 text-center show">
+            <h3 class="text-lg font-semibold text-fuchsia-300">Tasks Completed</h3>
+            <p id="tasks-completed" class="text-4xl font-bold mt-2">0</p>
+          </div>
+          <div class="card p-6 text-center show">
+            <h3 class="text-lg font-semibold text-cyan-300">Days Left</h3>
+            <p id="days-left" class="text-4xl font-bold mt-2">0</p>
+          </div>
+          <div class="card p-6 text-center show">
+            <h3 class="text-lg font-semibold text-green-300">Overall Progress</h3>
+            <p id="overall-progress" class="text-4xl font-bold mt-2">0%</p>
+          </div>
         </div>
       </div>
 
       <!-- Motivational Quotes -->
-      <div class="card p-6 text-center max-w-3xl mx-auto">
+      <div class="card p-6 text-center max-w-3xl mx-auto show">
         <h2 class="text-xl font-semibold text-yellow-300">💡 Daily Motivation</h2>
-        <blockquote id="quoteBox" class="mt-4 italic text-gray-100 fade">Loading...</blockquote>
-        <div class="mt-5 flex justify-center gap-3">
-          <button id="newQuoteBtn" class="px-4 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-400 transition" data-tip="Shuffle a new quote">New Quote</button>
-          <button id="copyQuoteBtn" class="px-4 py-2 bg-fuchsia-500 text-white rounded-lg hover:bg-fuchsia-400 transition" data-tip="Copy quote to clipboard">Copy</button>
+        <blockquote id="quote" class="mt-4 italic text-gray-200">Loading...</blockquote>
+        <div class="mt-4 flex items-center justify-center gap-3">
+          <button id="new-quote-btn"
+                  class="px-4 py-2 bg-cyan-500/90 text-white rounded-lg hover:bg-cyan-400 transition shadow-neon">
+            New Quote
+          </button>
+          <span class="text-xs text-gray-400">Randomized on load • Click for another</span>
         </div>
       </div>
     </section>
 
-    <!-- ============================================================
-         DAILY TASKS SECTION (Glass cards; per-day completion badges)
-         ============================================================ -->
-    <section id="tasks" class="px-6 pb-12">
+    <!-- ===============================================================================
+         SKILL BREAKDOWN + PROGRESS HISTORY (separate "Progress" section)
+         - Skill readiness mini-bars by category (Writing / Speaking / Reading / Mock / Exam)
+         - Progress history mini bar chart (last N samples recorded)
+    ================================================================================ -->
+    <section id="progress" class="p-6 md:p-10 space-y-10 section-gap">
+      <h2 class="text-3xl font-bold text-center mb-4 bg-gradient-to-r from-green-400 to-yellow-400 bg-clip-text text-transparent neon">
+        📊 Progress & Readiness
+      </h2>
+
+      <!-- Skill Readiness Bars -->
+      <div class="card p-6 max-w-4xl mx-auto show">
+        <h3 class="text-lg font-semibold text-gray-200 mb-4">Skill Readiness Breakdown</h3>
+        <div class="space-y-4">
+          <!-- Each row: label + % + bar -->
+          <div>
+            <div class="flex items-center justify-between text-sm text-gray-300">
+              <span>Writing</span><span id="wrt-pct">0%</span>
+            </div>
+            <div class="h-3 bg-white/10 rounded-full overflow-hidden">
+              <div id="wrt-bar" class="h-3 bg-gradient-to-r from-cyan-400 to-cyan-200 transition-all duration-500" style="width:0%"></div>
+            </div>
+          </div>
+          <div>
+            <div class="flex items-center justify-between text-sm text-gray-300">
+              <span>Speaking</span><span id="spk-pct">0%</span>
+            </div>
+            <div class="h-3 bg-white/10 rounded-full overflow-hidden">
+              <div id="spk-bar" class="h-3 bg-gradient-to-r from-pink-400 to-pink-200 transition-all duration-500" style="width:0%"></div>
+            </div>
+          </div>
+          <div>
+            <div class="flex items-center justify-between text-sm text-gray-300">
+              <span>Reading</span><span id="rdg-pct">0%</span>
+            </div>
+            <div class="h-3 bg-white/10 rounded-full overflow-hidden">
+              <div id="rdg-bar" class="h-3 bg-gradient-to-r from-green-400 to-green-200 transition-all duration-500" style="width:0%"></div>
+            </div>
+          </div>
+          <div>
+            <div class="flex items-center justify-between text-sm text-gray-300">
+              <span>Mock</span><span id="mk-pct">0%</span>
+            </div>
+            <div class="h-3 bg-white/10 rounded-full overflow-hidden">
+              <div id="mk-bar" class="h-3 bg-gradient-to-r from-yellow-400 to-yellow-200 transition-all duration-500" style="width:0%"></div>
+            </div>
+          </div>
+          <div>
+            <div class="flex items-center justify-between text-sm text-gray-300">
+              <span>Exam Prep</span><span id="ex-pct">0%</span>
+            </div>
+            <div class="h-3 bg-white/10 rounded-full overflow-hidden">
+              <div id="ex-bar" class="h-3 bg-gradient-to-r from-lime-400 to-lime-200 transition-all duration-500" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+        <p class="text-xs text-gray-400 mt-4">
+          Tip: Percentages are derived from task completion within each category across your study plan cards.
+        </p>
+      </div>
+
+      <!-- Progress History Mini Chart -->
+      <div class="card p-6 max-w-4xl mx-auto show">
+        <h3 class="text-lg font-semibold text-gray-200 mb-2">Overall Progress History</h3>
+        <p class="text-sm text-gray-400 mb-4">Recent snapshots of your overall % as you check tasks (last 14 samples).</p>
+        <div class="bars" id="history-bars" aria-label="Progress history bars"></div>
+        <div class="flex justify-between text-[11px] text-gray-400 mt-2">
+          <span>Older</span><span>Newer</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===============================================================================
+         DAILY TASKS SECTION
+         - Your provided tasks, redesigned with glass cards + neon borders per module.
+         - Each card has a completion badge that appears when all tasks in that card are checked.
+         - data-category is used to compute skill breakdown.
+    ================================================================================ -->
+    <section id="tasks" class="p-6 md:p-10 section-gap">
       <h2 class="text-3xl font-bold text-center mb-10 bg-gradient-to-r from-cyan-400 to-fuchsia-400 bg-clip-text text-transparent neon">
         📅 Daily Study Plan
       </h2>
 
-      <!--
-        Each "day card" has:
-          - data-date="YYYY-MM-DD" (important for streaks & calendar mapping)
-          - data-type="writing|speaking|reading|mock|exam" (for skill breakdown)
-          - Checkboxes inside; each checkbox key: "<date>#<index>"
-      -->
+      <!-- Task Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
 
-      <div id="dayGrid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-
-        <!-- ===================== Day 1: Aug 26 (Writing) ===================== -->
-        <article class="card p-6 border-l-4 border-cyan-400" data-date="2025-08-26" data-type="writing" style="animation-delay:.05s">
-          <header class="flex items-center justify-between gap-3">
-            <h3 class="text-xl font-semibold text-cyan-300">Aug 26 (Day 1) — Writing</h3>
-            <span class="hidden badge complete-badge">✅ Day Completed!</span>
-          </header>
+        <!-- Aug 26 (Writing) -->
+        <article class="card p-6 border-l-4 border-cyan-400 show" data-category="Writing">
+          <h3 class="text-xl font-semibold text-cyan-300">Aug 26 (Day 1) — Writing</h3>
           <ul class="mt-4 space-y-3 text-sm">
-            <li><label><input type="checkbox" class="task"> 📝 Task 1 Email (formal)</label></li>
-            <li><label><input type="checkbox" class="task"> 📝 Task 2 Opinion essay (timed)</label></li>
-            <li><label><input type="checkbox" class="task"> 📝 Revise essay with connectors</label></li>
-            <li><label><input type="checkbox" class="task"> 📝 Vocabulary upgrade</label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📝 Task 1 Email (formal)</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📝 Task 2 Opinion essay (timed)</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📝 Revise essay with connectors</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📝 Vocabulary upgrade</span></label></li>
           </ul>
+          <p class="complete-badge mt-4 text-green-300 font-bold text-center">✅ Day Completed!</p>
         </article>
 
-        <!-- ===================== Day 2: Aug 27 (Speaking) ===================== -->
-        <article class="card p-6 border-l-4 border-pink-400" data-date="2025-08-27" data-type="speaking" style="animation-delay:.08s">
-          <header class="flex items-center justify-between gap-3">
-            <h3 class="text-xl font-semibold text-pink-300">Aug 27 (Day 2) — Speaking</h3>
-            <span class="hidden badge complete-badge">✅ Day Completed!</span>
-          </header>
+        <!-- Aug 27 (Speaking) -->
+        <article class="card p-6 border-l-4 border-pink-400 show" data-category="Speaking">
+          <h3 class="text-xl font-semibold text-pink-300">Aug 27 (Day 2) — Speaking</h3>
           <ul class="mt-4 space-y-3 text-sm">
-            <li><label><input type="checkbox" class="task"> 🎙 Record 3 prompts (describe, compare, opinion)</label></li>
-            <li><label><input type="checkbox" class="task"> 🎙 Review recordings, rewrite weak sentences</label></li>
-            <li><label><input type="checkbox" class="task"> 🎙 Use idioms & linking words</label></li>
-            <li><label><input type="checkbox" class="task"> 🎙 1 long response (60s)</label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>🎙 Record 3 prompts (describe, compare, opinion)</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>🎙 Review recordings, rewrite weak sentences</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>🎙 Use idioms & linking words</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>🎙 1 long response (60s)</span></label></li>
           </ul>
+          <p class="complete-badge mt-4 text-green-300 font-bold text-center">✅ Day Completed!</p>
         </article>
 
-        <!-- ===================== Day 3: Aug 28 (Reading) ===================== -->
-        <article class="card p-6 border-l-4 border-green-400" data-date="2025-08-28" data-type="reading" style="animation-delay:.11s">
-          <header class="flex items-center justify-between gap-3">
-            <h3 class="text-xl font-semibold text-green-300">Aug 28 (Day 3) — Reading</h3>
-            <span class="hidden badge complete-badge">✅ Day Completed!</span>
-          </header>
+        <!-- Aug 28 (Reading) -->
+        <article class="card p-6 border-l-4 border-green-400 show" data-category="Reading">
+          <h3 class="text-xl font-semibold text-green-300">Aug 28 (Day 3) — Reading</h3>
           <ul class="mt-4 space-y-3 text-sm">
-            <li><label><input type="checkbox" class="task"> 📖 3 practice passages (timed)</label></li>
-            <li><label><input type="checkbox" class="task"> 📖 Identify author’s assumptions</label></li>
-            <li><label><input type="checkbox" class="task"> 📖 Drill inference questions</label></li>
-            <li><label><input type="checkbox" class="task"> 📖 Summarize each passage</label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📖 3 practice passages (timed)</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📖 Identify author’s assumptions</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📖 Drill inference questions</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📖 Summarize each passage</span></label></li>
           </ul>
+          <p class="complete-badge mt-4 text-green-300 font-bold text-center">✅ Day Completed!</p>
         </article>
 
-        <!-- ===================== Day 4: Aug 29 (Writing) ===================== -->
-        <article class="card p-6 border-l-4 border-cyan-400" data-date="2025-08-29" data-type="writing" style="animation-delay:.14s">
-          <header class="flex items-center justify-between gap-3">
-            <h3 class="text-xl font-semibold text-cyan-300">Aug 29 (Day 4) — Writing</h3>
-            <span class="hidden badge complete-badge">✅ Day Completed!</span>
-          </header>
+        <!-- Aug 29 (Writing) -->
+        <article class="card p-6 border-l-4 border-cyan-400 show" data-category="Writing">
+          <h3 class="text-xl font-semibold text-cyan-300">Aug 29 (Day 4) — Writing</h3>
           <ul class="mt-4 space-y-3 text-sm">
-            <li><label><input type="checkbox" class="task"> 📝 Task 1 (complaint email)</label></li>
-            <li><label><input type="checkbox" class="task"> 📝 Task 2 (persuasive essay)</label></li>
-            <li><label><input type="checkbox" class="task"> 📝 Edit for grammar variety</label></li>
-            <li><label><input type="checkbox" class="task"> 📝 Self-grade with rubric</label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📝 Task 1 (complaint email)</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📝 Task 2 (persuasive essay)</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📝 Edit for grammar variety</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📝 Self-grade with rubric</span></label></li>
           </ul>
+          <p class="complete-badge mt-4 text-green-300 font-bold text-center">✅ Day Completed!</p>
         </article>
 
-        <!-- ===================== Day 5: Aug 30 (Speaking) ===================== -->
-        <article class="card p-6 border-l-4 border-pink-400" data-date="2025-08-30" data-type="speaking" style="animation-delay:.17s">
-          <header class="flex items-center justify-between gap-3">
-            <h3 class="text-xl font-semibold text-pink-300">Aug 30 (Day 5) — Speaking</h3>
-            <span class="hidden badge complete-badge">✅ Day Completed!</span>
-          </header>
+        <!-- Aug 30 (Speaking) -->
+        <article class="card p-6 border-l-4 border-pink-400 show" data-category="Speaking">
+          <h3 class="text-xl font-semibold text-pink-300">Aug 30 (Day 5) — Speaking</h3>
           <ul class="mt-4 space-y-3 text-sm">
-            <li><label><input type="checkbox" class="task"> 🎙 4 prompts (storytelling)</label></li>
-            <li><label><input type="checkbox" class="task"> 🎙 Use conditionals naturally</label></li>
-            <li><label><input type="checkbox" class="task"> 🎙 Practice rhetorical Qs</label></li>
-            <li><label><input type="checkbox" class="task"> 🎙 1 mock Speaking task (full set)</label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>🎙 4 prompts (storytelling)</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>🎙 Use conditionals naturally</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>🎙 Practice rhetorical Qs</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>🎙 1 mock Speaking task (full set)</span></label></li>
           </ul>
+          <p class="complete-badge mt-4 text-green-300 font-bold text-center">✅ Day Completed!</p>
         </article>
 
-        <!-- ===================== Day 6: Aug 31 (Reading) ===================== -->
-        <article class="card p-6 border-l-4 border-green-400" data-date="2025-08-31" data-type="reading" style="animation-delay:.20s">
-          <header class="flex items-center justify-between gap-3">
-            <h3 class="text-xl font-semibold text-green-300">Aug 31 (Day 6) — Reading</h3>
-            <span class="hidden badge complete-badge">✅ Day Completed!</span>
-          </header>
+        <!-- Aug 31 (Reading) -->
+        <article class="card p-6 border-l-4 border-green-400 show" data-category="Reading">
+          <h3 class="text-xl font-semibold text-green-300">Aug 31 (Day 6) — Reading</h3>
           <ul class="mt-4 space-y-3 text-sm">
-            <li><label><input type="checkbox" class="task"> 📖 3 inference passages</label></li>
-            <li><label><input type="checkbox" class="task"> 📖 Identify tone & bias</label></li>
-            <li><label><input type="checkbox" class="task"> 📖 Answer “most likely” Qs</label></li>
-            <li><label><input type="checkbox" class="task"> 📖 Summarize author’s argument</label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📖 3 inference passages</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📖 Identify tone & bias</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📖 Answer “most likely” Qs</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📖 Summarize author’s argument</span></label></li>
           </ul>
+          <p class="complete-badge mt-4 text-green-300 font-bold text-center">✅ Day Completed!</p>
         </article>
 
-        <!-- ===================== Day 7: Sept 1 (Writing) ===================== -->
-        <article class="card p-6 border-l-4 border-cyan-400" data-date="2025-09-01" data-type="writing" style="animation-delay:.23s">
-          <header class="flex items-center justify-between gap-3">
-            <h3 class="text-xl font-semibold text-cyan-300">Sept 1 (Day 7) — Writing</h3>
-            <span class="hidden badge complete-badge">✅ Day Completed!</span>
-          </header>
+        <!-- Sept 1 (Writing) -->
+        <article class="card p-6 border-l-4 border-cyan-400 show" data-category="Writing">
+          <h3 class="text-xl font-semibold text-cyan-300">Sept 1 (Day 7) — Writing</h3>
           <ul class="mt-4 space-y-3 text-sm">
-            <li><label><input type="checkbox" class="task"> 📝 Task 1 + Task 2 back-to-back</label></li>
-            <li><label><input type="checkbox" class="task"> 📝 Add counterargument & refutation</label></li>
-            <li><label><input type="checkbox" class="task"> 📝 Replace weak verbs</label></li>
-            <li><label><input type="checkbox" class="task"> 📝 Self-review & polish</label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📝 Task 1 + Task 2 back-to-back</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📝 Add counterargument & refutation</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📝 Replace weak verbs</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📝 Self-review & polish</span></label></li>
           </ul>
+          <p class="complete-badge mt-4 text-green-300 font-bold text-center">✅ Day Completed!</p>
         </article>
 
-        <!-- ===================== Day 8: Sept 2 (Speaking) ===================== -->
-        <article class="card p-6 border-l-4 border-pink-400" data-date="2025-09-02" data-type="speaking" style="animation-delay:.26s">
-          <header class="flex items-center justify-between gap-3">
-            <h3 class="text-xl font-semibold text-pink-300">Sept 2 (Day 8) — Speaking</h3>
-            <span class="hidden badge complete-badge">✅ Day Completed!</span>
-          </header>
+        <!-- Sept 2 (Speaking) -->
+        <article class="card p-6 border-l-4 border-pink-400 show" data-category="Speaking">
+          <h3 class="text-xl font-semibold text-pink-300">Sept 2 (Day 8) — Speaking</h3>
           <ul class="mt-4 space-y-3 text-sm">
-            <li><label><input type="checkbox" class="task"> 🎙 Record 5 prompts (compare, advise, describe)</label></li>
-            <li><label><input type="checkbox" class="task"> 🎙 Focus on smooth delivery</label></li>
-            <li><label><input type="checkbox" class="task"> 🎙 Review for filler words</label></li>
-            <li><label><input type="checkbox" class="task"> 🎙 1 timed long response</label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>🎙 Record 5 prompts (compare, advise, describe)</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>🎙 Focus on smooth delivery</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>🎙 Review for filler words</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>🎙 1 timed long response</span></label></li>
           </ul>
+          <p class="complete-badge mt-4 text-green-300 font-bold text-center">✅ Day Completed!</p>
         </article>
 
-        <!-- ===================== Day 9: Sept 3 (Reading) ===================== -->
-        <article class="card p-6 border-l-4 border-green-400" data-date="2025-09-03" data-type="reading" style="animation-delay:.29s">
-          <header class="flex items-center justify-between gap-3">
-            <h3 class="text-xl font-semibold text-green-300">Sept 3 (Day 9) — Reading</h3>
-            <span class="hidden badge complete-badge">✅ Day Completed!</span>
-          </header>
+        <!-- Sept 3 (Reading) -->
+        <article class="card p-6 border-l-4 border-green-400 show" data-category="Reading">
+          <h3 class="text-xl font-semibold text-green-300">Sept 3 (Day 9) — Reading</h3>
           <ul class="mt-4 space-y-3 text-sm">
-            <li><label><input type="checkbox" class="task"> 📖 4 practice passages (timed)</label></li>
-            <li><label><input type="checkbox" class="task"> 📖 Identify argument flow</label></li>
-            <li><label><input type="checkbox" class="task"> 📖 Tone/inference drills</label></li>
-            <li><label><input type="checkbox" class="task"> 📖 Summarize key thesis</label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📖 4 practice passages (timed)</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📖 Identify argument flow</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📖 Tone/inference drills</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📖 Summarize key thesis</span></label></li>
           </ul>
+          <p class="complete-badge mt-4 text-green-300 font-bold text-center">✅ Day Completed!</p>
         </article>
 
-        <!-- ===================== Day 10: Sept 4 (Writing) ===================== -->
-        <article class="card p-6 border-l-4 border-cyan-400" data-date="2025-09-04" data-type="writing" style="animation-delay:.32s">
-          <header class="flex items-center justify-between gap-3">
-            <h3 class="text-xl font-semibold text-cyan-300">Sept 4 (Day 10) — Writing</h3>
-            <span class="hidden badge complete-badge">✅ Day Completed!</span>
-          </header>
+        <!-- Sept 4 (Writing) -->
+        <article class="card p-6 border-l-4 border-cyan-400 show" data-category="Writing">
+          <h3 class="text-xl font-semibold text-cyan-300">Sept 4 (Day 10) — Writing</h3>
           <ul class="mt-4 space-y-3 text-sm">
-            <li><label><input type="checkbox" class="task"> 📝 Task 1 polished essay</label></li>
-            <li><label><input type="checkbox" class="task"> 📝 Task 2 (timed opinion essay)</label></li>
-            <li><label><input type="checkbox" class="task"> 📝 Revise connectors</label></li>
-            <li><label><input type="checkbox" class="task"> 📝 Peer/self-evaluation</label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📝 Task 1 polished essay</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📝 Task 2 (timed opinion essay)</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📝 Revise connectors</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📝 Peer/self-evaluation</span></label></li>
           </ul>
+          <p class="complete-badge mt-4 text-green-300 font-bold text-center">✅ Day Completed!</p>
         </article>
 
-        <!-- ===================== Day 11: Sept 5 (Speaking) ===================== -->
-        <article class="card p-6 border-l-4 border-pink-400" data-date="2025-09-05" data-type="speaking" style="animation-delay:.35s">
-          <header class="flex items-center justify-between gap-3">
-            <h3 class="text-xl font-semibold text-pink-300">Sept 5 (Day 11) — Speaking</h3>
-            <span class="hidden badge complete-badge">✅ Day Completed!</span>
-          </header>
+        <!-- Sept 5 (Speaking) -->
+        <article class="card p-6 border-l-4 border-pink-400 show" data-category="Speaking">
+          <h3 class="text-xl font-semibold text-pink-300">Sept 5 (Day 11) — Speaking</h3>
           <ul class="mt-4 space-y-3 text-sm">
-            <li><label><input type="checkbox" class="task"> 🎙 4 prompts (timed)</label></li>
-            <li><label><input type="checkbox" class="task"> 🎙 Add counterarguments</label></li>
-            <li><label><input type="checkbox" class="task"> 🎙 Check fluency and pacing</label></li>
-            <li><label><input type="checkbox" class="task"> 🎙 Mock full Speaking test</label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>🎙 4 prompts (timed)</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>🎙 Add counterarguments</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>🎙 Check fluency and pacing</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>🎙 Mock full Speaking test</span></label></li>
           </ul>
+          <p class="complete-badge mt-4 text-green-300 font-bold text-center">✅ Day Completed!</p>
         </article>
 
-        <!-- ===================== Day 12: Sept 6 (Writing) ===================== -->
-        <article class="card p-6 border-l-4 border-cyan-400" data-date="2025-09-06" data-type="writing" style="animation-delay:.38s">
-          <header class="flex items-center justify-between gap-3">
-            <h3 class="text-xl font-semibold text-cyan-300">Sept 6 (Day 12) — Writing</h3>
-            <span class="hidden badge complete-badge">✅ Day Completed!</span>
-          </header>
+        <!-- Sept 6 (Writing) -->
+        <article class="card p-6 border-l-4 border-cyan-400 show" data-category="Writing">
+          <h3 class="text-xl font-semibold text-cyan-300">Sept 6 (Day 12) — Writing</h3>
           <ul class="mt-4 space-y-3 text-sm">
-            <li><label><input type="checkbox" class="task"> 📝 Task 2 opinion essay (polish)</label></li>
-            <li><label><input type="checkbox" class="task"> 📝 Add variety in grammar</label></li>
-            <li><label><input type="checkbox" class="task"> 📝 Revise 2 old essays</label></li>
-            <li><label><input type="checkbox" class="task"> 📝 Vocabulary list update</label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📝 Task 2 opinion essay (polish)</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📝 Add variety in grammar</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📝 Revise 2 old essays</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📝 Vocabulary list update</span></label></li>
           </ul>
+          <p class="complete-badge mt-4 text-green-300 font-bold text-center">✅ Day Completed!</p>
         </article>
 
-        <!-- ===================== Day 13: Sept 7 (Full Mock) ===================== -->
-        <article class="card p-6 border-2 border-yellow-400" data-date="2025-09-07" data-type="mock" style="animation-delay:.41s">
-          <header class="flex items-center justify-between gap-3">
-            <h3 class="text-xl font-semibold text-yellow-300">Sept 7 — Full Mock Test</h3>
-            <span class="hidden badge complete-badge">✅ Day Completed!</span>
-          </header>
+        <!-- Sept 7 (Full Mock) -->
+        <article class="card p-6 border-2 border-yellow-400 show" data-category="Mock">
+          <h3 class="text-xl font-semibold text-yellow-300">Sept 7 — Full Mock Test</h3>
           <ul class="mt-4 space-y-3 text-sm">
-            <li><label><input type="checkbox" class="task"> ✅ Full CELPIP Mock (all 4 skills)</label></li>
-            <li><label><input type="checkbox" class="task"> 📊 Review & error log</label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>✅ Full CELPIP Mock (all 4 skills)</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📊 Review & error log</span></label></li>
           </ul>
+          <p class="complete-badge mt-4 text-green-300 font-bold text-center">✅ Day Completed!</p>
         </article>
 
-        <!-- ===================== Day 14: Sept 8 (Writing) ===================== -->
-        <article class="card p-6 border-l-4 border-cyan-400" data-date="2025-09-08" data-type="writing" style="animation-delay:.44s">
-          <header class="flex items-center justify-between gap-3">
-            <h3 class="text-xl font-semibold text-cyan-300">Sept 8 (Day 14) — Writing</h3>
-            <span class="hidden badge complete-badge">✅ Day Completed!</span>
-          </header>
+        <!-- Sept 8 (Writing) -->
+        <article class="card p-6 border-l-4 border-cyan-400 show" data-category="Writing">
+          <h3 class="text-xl font-semibold text-cyan-300">Sept 8 (Day 14) — Writing</h3>
           <ul class="mt-4 space-y-3 text-sm">
-            <li><label><input type="checkbox" class="task"> 📝 Task 1 polished email</label></li>
-            <li><label><input type="checkbox" class="task"> 📝 Revise old essays</label></li>
-            <li><label><input type="checkbox" class="task"> 📝 Upgrade transitions</label></li>
-            <li><label><input type="checkbox" class="task"> 📝 1 full timed set</label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📝 Task 1 polished email</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📝 Revise old essays</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📝 Upgrade transitions</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📝 1 full timed set</span></label></li>
           </ul>
+          <p class="complete-badge mt-4 text-green-300 font-bold text-center">✅ Day Completed!</p>
         </article>
 
-        <!-- ===================== Day 15: Sept 9 (Speaking) ===================== -->
-        <article class="card p-6 border-l-4 border-pink-400" data-date="2025-09-09" data-type="speaking" style="animation-delay:.47s">
-          <header class="flex items-center justify-between gap-3">
-            <h3 class="text-xl font-semibold text-pink-300">Sept 9 (Day 15) — Speaking</h3>
-            <span class="hidden badge complete-badge">✅ Day Completed!</span>
-          </header>
+        <!-- Sept 9 (Speaking) -->
+        <article class="card p-6 border-l-4 border-pink-400 show" data-category="Speaking">
+          <h3 class="text-xl font-semibold text-pink-300">Sept 9 (Day 15) — Speaking</h3>
           <ul class="mt-4 space-y-3 text-sm">
-            <li><label><input type="checkbox" class="task"> 🎙 5 prompts (timed)</label></li>
-            <li><label><input type="checkbox" class="task"> 🎙 Refine idioms/phrases</label></li>
-            <li><label><input type="checkbox" class="task"> 🎙 Eliminate filler words</label></li>
-            <li><label><input type="checkbox" class="task"> 🎙 1 mock speaking test</label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>🎙 5 prompts (timed)</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>🎙 Refine idioms/phrases</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>🎙 Eliminate filler words</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>🎙 1 mock speaking test</span></label></li>
           </ul>
+          <p class="complete-badge mt-4 text-green-300 font-bold text-center">✅ Day Completed!</p>
         </article>
 
-        <!-- ===================== Day 16: Sept 10 (Mini Mock) ===================== -->
-        <article class="card p-6 border-2 border-yellow-400" data-date="2025-09-10" data-type="mock" style="animation-delay:.50s">
-          <header class="flex items-center justify-between gap-3">
-            <h3 class="text-xl font-semibold text-yellow-300">Sept 10 — Mini Mock</h3>
-            <span class="hidden badge complete-badge">✅ Day Completed!</span>
-          </header>
+        <!-- Sept 10 (Mini Mock) -->
+        <article class="card p-6 border-2 border-yellow-400 show" data-category="Mock">
+          <h3 class="text-xl font-semibold text-yellow-300">Sept 10 — Mini Mock</h3>
           <ul class="mt-4 space-y-3 text-sm">
-            <li><label><input type="checkbox" class="task"> 📝 Writing + Speaking (mock)</label></li>
-            <li><label><input type="checkbox" class="task"> 📖 Reading (2 passages)</label></li>
-            <li><label><input type="checkbox" class="task"> 🎧 Listening practice</label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📝 Writing + Speaking (mock)</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📖 Reading (2 passages)</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>🎧 Listening practice</span></label></li>
           </ul>
+          <p class="complete-badge mt-4 text-green-300 font-bold text-center">✅ Day Completed!</p>
         </article>
 
-        <!-- ===================== Day 17: Sept 11 (Writing) ===================== -->
-        <article class="card p-6 border-l-4 border-cyan-400" data-date="2025-09-11" data-type="writing" style="animation-delay:.53s">
-          <header class="flex items-center justify-between gap-3">
-            <h3 class="text-xl font-semibold text-cyan-300">Sept 11 (Day 17) — Writing</h3>
-            <span class="hidden badge complete-badge">✅ Day Completed!</span>
-          </header>
+        <!-- Sept 11 (Writing) -->
+        <article class="card p-6 border-l-4 border-cyan-400 show" data-category="Writing">
+          <h3 class="text-xl font-semibold text-cyan-300">Sept 11 (Day 17) — Writing</h3>
           <ul class="mt-4 space-y-3 text-sm">
-            <li><label><input type="checkbox" class="task"> 📝 Final polish essay</label></li>
-            <li><label><input type="checkbox" class="task"> 📝 Review grammar range</label></li>
-            <li><label><input type="checkbox" class="task"> 📝 Revise vocabulary list</label></li>
-            <li><label><input type="checkbox" class="task"> 📝 Short Task 1 drill</label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📝 Final polish essay</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📝 Review grammar range</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📝 Revise vocabulary list</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📝 Short Task 1 drill</span></label></li>
           </ul>
+          <p class="complete-badge mt-4 text-green-300 font-bold text-center">✅ Day Completed!</p>
         </article>
 
-        <!-- ===================== Day 18: Sept 12 (Light Writing) ===================== -->
-        <article class="card p-6 border-l-4 border-cyan-400" data-date="2025-09-12" data-type="writing" style="animation-delay:.56s">
-          <header class="flex items-center justify-between gap-3">
-            <h3 class="text-xl font-semibold text-cyan-300">Sept 12 (Day 18) — Light Writing</h3>
-            <span class="hidden badge complete-badge">✅ Day Completed!</span>
-          </header>
+        <!-- Sept 12 (Light Writing) -->
+        <article class="card p-6 border-l-4 border-cyan-400 show" data-category="Writing">
+          <h3 class="text-xl font-semibold text-cyan-300">Sept 12 (Day 18) — Light Writing</h3>
           <ul class="mt-4 space-y-3 text-sm">
-            <li><label><input type="checkbox" class="task"> 📝 Task 2 polished essay (final)</label></li>
-            <li><label><input type="checkbox" class="task"> 🎙 3 speaking prompts (light)</label></li>
-            <li><label><input type="checkbox" class="task"> 📖 1 reading passage</label></li>
-            <li><label><input type="checkbox" class="task"> 🎧 1 listening clip</label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📝 Task 2 polished essay (final)</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>🎙 3 speaking prompts (light)</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📖 1 reading passage</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>🎧 1 listening clip</span></label></li>
           </ul>
+          <p class="complete-badge mt-4 text-green-300 font-bold text-center">✅ Day Completed!</p>
         </article>
 
-        <!-- ===================== Exam Day: Sept 13 ===================== -->
-        <article class="card p-6 border-2 border-green-400" data-date="2025-09-13" data-type="exam" style="animation-delay:.59s">
-          <header class="flex items-center justify-between gap-3">
-            <h3 class="text-xl font-semibold text-green-300">Sept 13 — Exam Day</h3>
-            <span class="hidden badge complete-badge">✅ Day Completed!</span>
-          </header>
+        <!-- Sept 13 (Exam) -->
+        <article class="card p-6 border-2 border-green-400 show" data-category="Exam">
+          <h3 class="text-xl font-semibold text-green-300">Sept 13 — Exam Day</h3>
           <ul class="mt-4 space-y-3 text-sm">
-            <li><label><input type="checkbox" class="task"> ⚡ Light warm-up only</label></li>
-            <li><label><input type="checkbox" class="task"> 🎙 2 short speaking warm-ups</label></li>
-            <li><label><input type="checkbox" class="task"> 📖 Review connectors list</label></li>
-            <li><label><input type="checkbox" class="task"> 💧 Rest & hydrate</label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>⚡ Light warm-up only</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>🎙 2 short speaking warm-ups</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>📖 Review connectors list</span></label></li>
+            <li><label class="flex items-center gap-2"><input type="checkbox" class="task"> <span>💧 Rest & hydrate</span></label></li>
           </ul>
+          <p class="complete-badge mt-4 text-green-300 font-bold text-center">✅ Day Completed!</p>
         </article>
 
-      </div>
+      </div><!-- end task grid -->
     </section>
 
-    <!-- ============================================================
-         CALENDAR SECTION (Static Aug–Sept 2025 grid with color codes)
-         ============================================================ -->
-    <section id="calendar" class="px-6 pb-12">
+    <!-- ===============================================================================
+         CALENDAR SECTION
+         - Static map for Aug–Sept 2025 with tooltips on each study day.
+         - Colors match categories: Writing (cyan), Speaking (pink), Reading (green), Mock (yellow), Exam (lime).
+    ================================================================================ -->
+    <section id="calendar" class="p-6 md:p-10 section-gap">
       <h2 class="text-3xl font-bold text-center mb-10 bg-gradient-to-r from-green-400 to-yellow-400 bg-clip-text text-transparent neon">
         📆 Study Calendar (Aug–Sept 2025)
       </h2>
 
-      <!-- Legend -->
-      <div class="card p-4 max-w-xl mx-auto mb-6">
-        <div class="flex flex-wrap justify-center gap-4 text-sm">
+      <!-- Calendar Legend -->
+      <div class="card p-4 max-w-3xl mx-auto show">
+        <div class="flex flex-wrap items-center justify-center gap-5 text-sm">
           <span class="flex items-center gap-2"><span class="w-4 h-4 bg-cyan-400 rounded"></span> Writing</span>
           <span class="flex items-center gap-2"><span class="w-4 h-4 bg-pink-400 rounded"></span> Speaking</span>
           <span class="flex items-center gap-2"><span class="w-4 h-4 bg-green-400 rounded"></span> Reading</span>
-          <span class="flex items-center gap-2"><span class="w-4 h-4 bg-yellow-400 rounded"></span> Mock Test</span>
+          <span class="flex items-center gap-2"><span class="w-4 h-4 bg-yellow-400 rounded"></span> Mock</span>
           <span class="flex items-center gap-2"><span class="w-4 h-4 bg-lime-400 rounded"></span> Exam</span>
         </div>
       </div>
 
-      <!-- Static day tiles for Aug 26 — Sept 13 -->
-      <div class="grid grid-cols-7 gap-3 text-center text-gray-200 max-w-5xl mx-auto">
-        <!-- Weekday Labels -->
-        <div class="font-bold py-2">Sun</div><div class="font-bold py-2">Mon</div><div class="font-bold py-2">Tue</div>
-        <div class="font-bold py-2">Wed</div><div class="font-bold py-2">Thu</div><div class="font-bold py-2">Fri</div><div class="font-bold py-2">Sat</div>
+      <!-- Simple Static Calendar Grid -->
+      <div class="card p-6 max-w-4xl mx-auto mt-6 show">
+        <!-- Weekday labels -->
+        <div class="grid grid-cols-7 gap-4 text-center text-gray-200 mb-3">
+          <div class="font-bold">Sun</div><div class="font-bold">Mon</div><div class="font-bold">Tue</div>
+          <div class="font-bold">Wed</div><div class="font-bold">Thu</div><div class="font-bold">Fri</div><div class="font-bold">Sat</div>
+        </div>
 
-        <!-- Fillers before 26th (rough alignment) -->
-        <div class="py-3 opacity-40">17</div><div class="py-3 opacity-40">18</div><div class="py-3 opacity-40">19</div><div class="py-3 opacity-40">20</div>
-        <div class="py-3 opacity-40">21</div><div class="py-3 opacity-40">22</div><div class="py-3 opacity-40">23</div>
-        <div class="py-3 opacity-40">24</div><div class="py-3 opacity-40">25</div>
+        <!-- Aug 2025 last week row (21–23 are just placeholders to align) -->
+        <div class="grid grid-cols-7 gap-4 text-center text-gray-200">
+          <div class="opacity-50">21</div><div class="opacity-50">22</div><div class="opacity-50">23</div>
+          <div class="opacity-50">24</div><div class="opacity-50">25</div>
+          <div class="has-tooltip"><div class="tooltip">Day 1 — Writing</div><div class="rounded-lg bg-cyan-400/90 text-black font-semibold">26</div></div>
+          <div class="has-tooltip"><div class="tooltip">Day 2 — Speaking</div><div class="rounded-lg bg-pink-400/90 text-black font-semibold">27</div></div>
 
-        <!-- Aug 26 → Sept 13 -->
-        <div class="cal-day bg-cyan-400"  data-title="Aug 26 — Writing"  data-date="2025-08-26">26</div>
-        <div class="cal-day bg-pink-400"  data-title="Aug 27 — Speaking" data-date="2025-08-27">27</div>
-        <div class="cal-day bg-green-400" data-title="Aug 28 — Reading"  data-date="2025-08-28">28</div>
-        <div class="cal-day bg-cyan-400"  data-title="Aug 29 — Writing"  data-date="2025-08-29">29</div>
-        <div class="cal-day bg-pink-400"  data-title="Aug 30 — Speaking" data-date="2025-08-30">30</div>
-        <div class="cal-day bg-green-400" data-title="Aug 31 — Reading"  data-date="2025-08-31">31</div>
-        <div class="cal-day bg-cyan-400"  data-title="Sept 1 — Writing"  data-date="2025-09-01">1</div>
-        <div class="cal-day bg-pink-400"  data-title="Sept 2 — Speaking" data-date="2025-09-02">2</div>
-        <div class="cal-day bg-green-400" data-title="Sept 3 — Reading"  data-date="2025-09-03">3</div>
-        <div class="cal-day bg-cyan-400"  data-title="Sept 4 — Writing"  data-date="2025-09-04">4</div>
-        <div class="cal-day bg-pink-400"  data-title="Sept 5 — Speaking" data-date="2025-09-05">5</div>
-        <div class="cal-day bg-cyan-400"  data-title="Sept 6 — Writing"  data-date="2025-09-06">6</div>
-        <div class="cal-day bg-yellow-400" data-title="Sept 7 — Full Mock" data-date="2025-09-07">7</div>
-        <div class="cal-day bg-cyan-400"  data-title="Sept 8 — Writing"  data-date="2025-09-08">8</div>
-        <div class="cal-day bg-pink-400"  data-title="Sept 9 — Speaking" data-date="2025-09-09">9</div>
-        <div class="cal-day bg-yellow-400" data-title="Sept 10 — Mini Mock" data-date="2025-09-10">10</div>
-        <div class="cal-day bg-cyan-400"  data-title="Sept 11 — Writing" data-date="2025-09-11">11</div>
-        <div class="cal-day bg-cyan-400"  data-title="Sept 12 — Light Writing" data-date="2025-09-12">12</div>
-        <div class="cal-day bg-lime-400"  data-title="Sept 13 — Exam Day" data-date="2025-09-13">13</div>
-      </div>
-
-      <!-- Calendar helper: clicking a date scrolls to its card -->
-      <p class="text-center text-xs text-slate-300 mt-4">Tip: Click a colored date to jump to that day’s card.</p>
-    </section>
-
-    <!-- ============================================================
-         PROGRESS SECTION (Skill breakdown + mini chart)
-         ============================================================ -->
-    <section id="progress" class="px-6 pb-12">
-      <h2 class="text-3xl font-bold text-center mb-10 bg-gradient-to-r from-fuchsia-400 to-cyan-400 bg-clip-text text-transparent neon">
-        📈 Progress & Statistics
-      </h2>
-
-      <!-- Skill Breakdown Bars -->
-      <div class="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto">
-        <div class="card p-6">
-          <h3 class="font-semibold text-cyan-300">Writing</h3>
-          <div class="w-full h-3 bg-white/10 rounded-full mt-3 overflow-hidden">
-            <div id="skillWriting" class="h-3 bg-cyan-400" style="width:0%"></div>
-          </div>
-          <p id="skillWritingLbl" class="text-xs text-right mt-1 text-slate-300">0%</p>
+          <div class="has-tooltip"><div class="tooltip">Day 3 — Reading</div><div class="rounded-lg bg-green-400/90 text-black font-semibold">28</div></div>
+          <div class="has-tooltip"><div class="tooltip">Day 4 — Writing</div><div class="rounded-lg bg-cyan-400/90 text-black font-semibold">29</div></div>
+          <div class="has-tooltip"><div class="tooltip">Day 5 — Speaking</div><div class="rounded-lg bg-pink-400/90 text-black font-semibold">30</div></div>
+          <div class="has-tooltip"><div class="tooltip">Day 6 — Reading</div><div class="rounded-lg bg-green-400/90 text-black font-semibold">31</div></div>
+          <div class="has-tooltip"><div class="tooltip">Day 7 — Writing</div><div class="rounded-lg bg-cyan-400/90 text-black font-semibold">1</div></div>
+          <div class="has-tooltip"><div class="tooltip">Day 8 — Speaking</div><div class="rounded-lg bg-pink-400/90 text-black font-semibold">2</div></div>
+          <div class="has-tooltip"><div class="tooltip">Day 9 — Reading</div><div class="rounded-lg bg-green-400/90 text-black font-semibold">3</div></div>
+          <div class="has-tooltip"><div class="tooltip">Day 10 — Writing</div><div class="rounded-lg bg-cyan-400/90 text-black font-semibold">4</div></div>
+          <div class="has-tooltip"><div class="tooltip">Day 11 — Speaking</div><div class="rounded-lg bg-pink-400/90 text-black font-semibold">5</div></div>
+          <div class="has-tooltip"><div class="tooltip">Day 12 — Writing</div><div class="rounded-lg bg-cyan-400/90 text-black font-semibold">6</div></div>
+          <div class="has-tooltip"><div class="tooltip">Full Mock</div><div class="rounded-lg bg-yellow-400/90 text-black font-semibold">7</div></div>
+          <div class="has-tooltip"><div class="tooltip">Day 14 — Writing</div><div class="rounded-lg bg-cyan-400/90 text-black font-semibold">8</div></div>
+          <div class="has-tooltip"><div class="tooltip">Day 15 — Speaking</div><div class="rounded-lg bg-pink-400/90 text-black font-semibold">9</div></div>
+          <div class="has-tooltip"><div class="tooltip">Mini Mock</div><div class="rounded-lg bg-yellow-400/90 text-black font-semibold">10</div></div>
+          <div class="has-tooltip"><div class="tooltip">Day 17 — Writing</div><div class="rounded-lg bg-cyan-400/90 text-black font-semibold">11</div></div>
+          <div class="has-tooltip"><div class="tooltip">Day 18 — Light Writing</div><div class="rounded-lg bg-cyan-400/90 text-black font-semibold">12</div></div>
+          <div class="has-tooltip"><div class="tooltip">Exam Day</div><div class="rounded-lg bg-lime-400/90 text-black font-semibold">13</div></div>
         </div>
-        <div class="card p-6">
-          <h3 class="font-semibold text-pink-300">Speaking</h3>
-          <div class="w-full h-3 bg-white/10 rounded-full mt-3 overflow-hidden">
-            <div id="skillSpeaking" class="h-3 bg-pink-400" style="width:0%"></div>
-          </div>
-          <p id="skillSpeakingLbl" class="text-xs text-right mt-1 text-slate-300">0%</p>
-        </div>
-        <div class="card p-6">
-          <h3 class="font-semibold text-green-300">Reading</h3>
-          <div class="w-full h-3 bg-white/10 rounded-full mt-3 overflow-hidden">
-            <div id="skillReading" class="h-3 bg-green-400" style="width:0%"></div>
-          </div>
-          <p id="skillReadingLbl" class="text-xs text-right mt-1 text-slate-300">0%</p>
-        </div>
-        <div class="card p-6">
-          <h3 class="font-semibold text-yellow-300">Mock</h3>
-          <div class="w-full h-3 bg-white/10 rounded-full mt-3 overflow-hidden">
-            <div id="skillMock" class="h-3 bg-yellow-400" style="width:0%"></div>
-          </div>
-          <p id="skillMockLbl" class="text-xs text-right mt-1 text-slate-300">0%</p>
-        </div>
-      </div>
-
-      <!-- Mini Completion Graph (last N days) -->
-      <div class="card p-6 mt-8 max-w-6xl mx-auto">
-        <div class="flex items-center justify-between">
-          <h3 class="text-lg font-semibold text-slate-100">Completion Graph</h3>
-          <span class="text-xs text-slate-400">Last 10 study days</span>
-        </div>
-        <div id="chartWrap" class="mt-6 flex items-end gap-3 h-40">
-          <!-- Bars are injected here based on dailyPct[] -->
-        </div>
-        <div id="chartLabels" class="mt-2 grid gap-3 text-[11px] text-slate-300" style="grid-template-columns: repeat(10, minmax(0, 1fr));">
-          <!-- Labels injected below each bar -->
-        </div>
+        <p class="text-xs text-gray-400 mt-4">Hover or tap a colored date to see the module tooltip.</p>
       </div>
     </section>
 
-    <!-- ============================================================
-         NOTES / JOURNAL SECTION (auto-save + history log)
-         ============================================================ -->
-    <section id="notes" class="px-6 pb-12">
-      <h2 class="text-3xl font-bold text-center mb-10 bg-gradient-to-r from-cyan-400 to-lime-400 bg-clip-text text-transparent neon">
+    <!-- ===============================================================================
+         NOTES / JOURNAL SECTION
+         - Rich textarea with auto-save
+         - Journal history (last 3 entries)
+    ================================================================================ -->
+    <section id="notes" class="p-6 md:p-10 space-y-6 section-gap">
+      <h2 class="text-3xl font-bold text-center mb-4 bg-gradient-to-r from-fuchsia-400 to-cyan-400 bg-clip-text text-transparent neon">
         📝 Journal & Reflections
       </h2>
-
-      <div class="grid md:grid-cols-2 gap-6 max-w-6xl mx-auto">
-        <!-- Editor -->
-        <div class="card p-6">
-          <h3 class="text-lg font-semibold text-slate-100">Quick Notes</h3>
-          <textarea id="journal" placeholder="Write your thoughts, reflections, or study notes here..."
-            class="w-full h-56 mt-3 p-4 bg-transparent text-gray-100 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-400"></textarea>
-          <p class="text-xs text-gray-400 mt-2">Auto-saved to your browser.</p>
-          <div class="mt-4 flex gap-3">
-            <button id="saveNoteBtn" class="px-4 py-2 bg-cyan-500 rounded-lg hover:bg-cyan-400" data-tip="Save note to history">Save to Log</button>
-            <button id="clearNoteBtn" class="px-4 py-2 bg-red-500 rounded-lg hover:bg-red-400" data-tip="Clear editor only">Clear</button>
-          </div>
+      <div class="card p-6 max-w-4xl mx-auto show">
+        <textarea id="journal" rows="10"
+                  placeholder="Write your thoughts, reflections, or study notes here... (Auto-saves)"
+                  class="w-full p-4 bg-transparent text-gray-200 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-400"></textarea>
+        <div class="mt-4 flex items-center gap-3">
+          <button id="save-entry-btn" class="px-4 py-2 bg-cyan-500/90 text-white rounded-lg hover:bg-cyan-400 transition shadow-neon">
+            Save as New Entry
+          </button>
+          <span class="text-xs text-gray-400">Note: typing auto-saves in background too</span>
         </div>
+      </div>
 
-        <!-- History -->
-        <div class="card p-6">
-          <h3 class="text-lg font-semibold text-slate-100">Recent Entries</h3>
-          <ol id="historyList" class="mt-3 space-y-3 text-sm">
-            <!-- Last 3 entries injected as timeline items -->
-          </ol>
-          <div class="mt-3 flex gap-3">
-            <button id="exportHistoryBtn" class="px-4 py-2 bg-fuchsia-500 rounded-lg hover:bg-fuchsia-400" data-tip="Download entries as .txt">
-              Export .txt
-            </button>
-            <button id="clearHistoryBtn" class="px-4 py-2 bg-amber-500 rounded-lg hover:bg-amber-400" data-tip="Remove all saved entries">
-              Clear History
-            </button>
-          </div>
+      <!-- Journal history (last 3 entries) -->
+      <div class="card p-6 max-w-4xl mx-auto show">
+        <h3 class="text-lg font-semibold text-gray-200 mb-3">Recent Entries</h3>
+        <div id="journal-history" class="space-y-3">
+          <!-- Entries injected here -->
         </div>
+        <p class="text-xs text-gray-500 mt-3">Only the last three entries are shown here for quick review.</p>
       </div>
     </section>
 
-    <!-- ============================================================
-         SETTINGS SECTION (reset, theme, confetti/sound toggles)
-         ============================================================ -->
-    <section id="settings" class="px-6 pb-16">
-      <h2 class="text-3xl font-bold text-center mb-8 bg-gradient-to-r from-yellow-400 to-pink-400 bg-clip-text text-transparent neon">
+    <!-- ===============================================================================
+         SETTINGS SECTION
+         - Reset progress
+         - Theme toggle (adds/removes 'dark' class for future theming)
+         - Confetti & sound toggles
+    ================================================================================ -->
+    <section id="settings" class="p-6 md:p-10 section-gap">
+      <h2 class="text-3xl font-bold text-center mb-10 bg-gradient-to-r from-yellow-400 to-pink-400 bg-clip-text text-transparent neon">
         ⚙️ Settings
       </h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
 
-      <div class="max-w-3xl mx-auto grid gap-6">
-        <div class="card p-6">
-          <h3 class="font-semibold text-slate-100">Preferences</h3>
-          <div class="mt-4 grid sm:grid-cols-2 gap-4">
-            <!-- Confetti toggle -->
-            <label class="flex items-center gap-3">
-              <input id="toggleConfetti" type="checkbox" class="w-5 h-5">
-              <span>Enable confetti when a day is completed</span>
+        <!-- Toggles -->
+        <div class="card p-6 show">
+          <h3 class="text-lg font-semibold mb-4">Preferences</h3>
+          <div class="space-y-4">
+            <label class="flex items-center justify-between">
+              <span class="text-sm text-gray-200">Enable Confetti</span>
+              <input type="checkbox" id="toggle-confetti" class="accent-cyan-400">
             </label>
-            <!-- Sound toggle -->
-            <label class="flex items-center gap-3">
-              <input id="toggleSound" type="checkbox" class="w-5 h-5">
-              <span>Enable sound effects (🎵 soft chime)</span>
+            <label class="flex items-center justify-between">
+              <span class="text-sm text-gray-200">Enable Celebration Sound</span>
+              <input type="checkbox" id="toggle-sound" class="accent-cyan-400">
+            </label>
+            <label class="flex items-center justify-between">
+              <span class="text-sm text-gray-200">Dark Mode (base)</span>
+              <input type="checkbox" id="toggle-theme" class="accent-cyan-400">
             </label>
           </div>
+          <p class="text-xs text-gray-500 mt-4">Your settings are saved locally and persist between sessions.</p>
         </div>
 
-        <div class="card p-6">
-          <h3 class="font-semibold text-slate-100">Theme</h3>
-          <p class="text-sm text-slate-300">Dark neon is default. Light mode is minimal (for print or daylight).</p>
-          <div class="mt-4 flex gap-3">
-            <button id="toggleThemeBtn" class="px-4 py-2 bg-cyan-500 rounded-lg hover:bg-cyan-400">Toggle Theme</button>
-            <button id="resetBtn" class="px-4 py-2 bg-red-500 rounded-lg hover:bg-red-400">Reset All Progress</button>
+        <!-- Reset + Info -->
+        <div class="card p-6 show">
+          <h3 class="text-lg font-semibold mb-4">Reset & Data</h3>
+          <p class="text-sm text-gray-300">Need a fresh start? You can reset your progress, journal, and settings.</p>
+          <div class="mt-4 flex flex-wrap gap-3">
+            <button id="reset-progress-btn"
+                    class="px-4 py-2 bg-red-500/90 text-white rounded-lg hover:bg-red-400 transition">
+              Reset All Progress
+            </button>
+            <button id="reset-journal-btn"
+                    class="px-4 py-2 bg-orange-500/90 text-white rounded-lg hover:bg-orange-400 transition">
+              Clear Journal
+            </button>
+            <button id="reset-settings-btn"
+                    class="px-4 py-2 bg-fuchsia-500/90 text-white rounded-lg hover:bg-fuchsia-400 transition">
+              Reset Settings
+            </button>
           </div>
+          <p class="text-xs text-gray-500 mt-4">This action cannot be undone.</p>
         </div>
+
       </div>
     </section>
 
-    <!-- ============================================================
+    <!-- ===============================================================================
          FOOTER
-         ============================================================ -->
-    <footer class="text-center text-gray-400 text-sm pb-10">
-      © 2025 Mohamed Ansar • IMAX Prep Mode 🚀
+    ================================================================================ -->
+    <footer class="text-center text-gray-400 text-sm mt-10 mb-6">
+      © 2025 Mohamed Ansar | IMAX Prep Mode 🚀
     </footer>
   </main>
 
-  <!-- ================================================================
-       SCRIPTS: STATE, PERSISTENCE, LOGIC, UI INTERACTIONS
-       ================================================================ -->
+  <!-- ===================================================================================
+       AUDIO (optional ding using Web Audio API; we won't embed files to keep it standalone)
+  ===================================================================================== -->
+
+  <!-- ===================================================================================
+       SCRIPTS
+       - State management
+       - Progress computation
+       - Skill breakdown computation
+       - Streak logic
+       - Confetti & sound
+       - Quotes widget
+       - Journal auto-save + history
+       - Sidebar interactions (active link on scroll, mobile toggle)
+       - Progress history mini chart
+  ===================================================================================== -->
   <script>
-    /* =====================================================================
-       QUICK DOM HELPERS
-       ===================================================================== */
-    const $  = (sel, parent = document) => parent.querySelector(sel);
-    const $$ = (sel, parent = document) => [...parent.querySelectorAll(sel)];
-    const clamp = (n, min=0, max=100) => Math.max(min, Math.min(max, n));
-
-    /* =====================================================================
-       GLOBAL ELEMENT REFS
-       ===================================================================== */
-    const ring        = $('#progressRing');
-    const progressTxt = $('#progressText');
-    const topBar      = $('#topProgressBar');
-
-    const tasksAll       = $$('.task');             // all checkboxes
-    const dayCards       = $$('#dayGrid article');  // each day card
-    const streakCounter  = $('#streakCounter');
-    const tasksCompleted = $('#tasksCompleted');
-    const daysLeftEl     = $('#daysLeft');
-    const overallProgEl  = $('#overallProgress');
-
-    const newQuoteBtn    = $('#newQuoteBtn');
-    const copyQuoteBtn   = $('#copyQuoteBtn');
-    const quoteBox       = $('#quoteBox');
-
-    // Skill bars
-    const skillEls = {
-      writing:  { bar: $('#skillWriting'),  lbl: $('#skillWritingLbl')  },
-      speaking: { bar: $('#skillSpeaking'), lbl: $('#skillSpeakingLbl') },
-      reading:  { bar: $('#skillReading'),  lbl: $('#skillReadingLbl')  },
-      mock:     { bar: $('#skillMock'),     lbl: $('#skillMockLbl')     },
-    };
-
-    // Journal
-    const journal           = $('#journal');
-    const saveNoteBtn       = $('#saveNoteBtn');
-    const clearNoteBtn      = $('#clearNoteBtn');
-    const historyList       = $('#historyList');
-    const clearHistoryBtn   = $('#clearHistoryBtn');
-    theExport = $('#exportHistoryBtn');
-
-    // Settings
-    const toggleConfettiEl  = $('#toggleConfetti');
-    const toggleSoundEl     = $('#toggleSound');
-    const toggleThemeBtn    = $('#toggleThemeBtn');
-    const resetBtn          = $('#resetBtn');
-
-    // Progress chart containers
-    const chartWrap   = $('#chartWrap');
-    const chartLabels = $('#chartLabels');
-
-    /* =====================================================================
-       CONSTANTS / SCHEDULE (dates used for streak & labels)
-       ===================================================================== */
-    const EXAM_DAY = '2025-09-13';
-    const SCHEDULE_ORDER = [
-      '2025-08-26','2025-08-27','2025-08-28','2025-08-29','2025-08-30','2025-08-31',
-      '2025-09-01','2025-09-02','2025-09-03','2025-09-04','2025-09-05','2025-09-06',
-      '2025-09-07','2025-09-08','2025-09-09','2025-09-10','2025-09-11','2025-09-12',
-      '2025-09-13'
-    ];
-
-    /* =====================================================================
-       LOCALSTORAGE UTILITIES
-       ===================================================================== */
+    /* *****************************************************************************************
+       UTILITIES & CONSTANTS
+       ------------------------------------------------------------------------------------------
+       - LocalStorage keys are centralized to avoid typos across the app.
+       - Helper: $(selector) and $all(selector) are short query helpers.
+       - Helper: saveLS(key, value) / loadLS(key, fallback) wrap JSON handling.
+    ***************************************************************************************** */
     const LS_KEYS = {
-      tasks: 'celpip-tasks',          // object: {"date#index": true/false}
-      dayDone: 'celpip-day-done',     // object: {"date": true/false}
-      streak: 'celpip-streak',        // integer
-      journal: 'celpip-journal',      // string
-      journalHistory: 'celpip-journal-history', // array of {ts, text}
-      settings: 'celpip-settings',    // object: { sound:bool, confetti:bool, theme:'dark'|'light' }
-      dailyPct: 'celpip-daily-pct',   // object: {"date": 0..100}
+      PROGRESS: 'celpip-progress',
+      JOURNAL_TEXT: 'celpip-journal',
+      JOURNAL_ENTRIES: 'celpip-journal-entries',
+      STREAK: 'celpip-streak',
+      SETTINGS: 'celpip-settings',
+      HISTORY: 'celpip-progress-history'  // array of {ts, pct}
     };
 
-    const readJSON = (k, fallback) => {
-      try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fallback; }
-      catch { return fallback; }
+    const $ = sel => document.querySelector(sel);
+    const $all = sel => Array.from(document.querySelectorAll(sel));
+
+    const saveLS = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+    const loadLS = (k, fb) => {
+      try { const v = JSON.parse(localStorage.getItem(k)); return (v === null ? fb : v); }
+      catch(e){ return fb; }
     };
-    const writeJSON = (k, v) => localStorage.setItem(k, JSON.stringify(v ?? null));
 
-    // Initialize storage objects if missing
-    let tasksState   = readJSON(LS_KEYS.tasks, {});
-    let dayDoneState = readJSON(LS_KEYS.dayDone, {});
-    let dailyPct     = readJSON(LS_KEYS.dailyPct, {});
-    let settings     = readJSON(LS_KEYS.settings, { sound: true, confetti: true, theme: 'dark' });
+    /* *****************************************************************************************
+       SETTINGS STATE
+       ------------------------------------------------------------------------------------------
+       - Confetti enabled
+       - Sound enabled
+       - Dark theme toggle (adds/removes 'dark' on body)
+    ***************************************************************************************** */
+    const defaultSettings = { confetti: true, sound: true, dark: false };
+    let settings = loadLS(LS_KEYS.SETTINGS, defaultSettings);
 
-    /* =====================================================================
-       THEME INIT
-       =====================================================================
+    // Apply theme on load
+    if (settings.dark) document.body.classList.add('dark');
 
+    // Wire up settings toggles
+    const toggleConfettiEl = $('#toggle-confetti');
+    const toggleSoundEl    = $('#toggle-sound');
+    const toggleThemeEl    = $('#toggle-theme');
 
+    toggleConfettiEl.checked = !!settings.confetti;
+    toggleSoundEl.checked = !!settings.sound;
+    toggleThemeEl.checked = !!settings.dark;
+
+    toggleConfettiEl.addEventListener('change', () => {
+      settings.confetti = toggleConfettiEl.checked; saveLS(LS_KEYS.SETTINGS, settings);
+    });
+    toggleSoundEl.addEventListener('change', () => {
+      settings.sound = toggleSoundEl.checked; saveLS(LS_KEYS.SETTINGS, settings);
+    });
+    toggleThemeEl.addEventListener('change', () => {
+      settings.dark = toggleThemeEl.checked;
+      document.body.classList.toggle('dark', settings.dark);
+      saveLS(LS_KEYS.SETTINGS, settings);
+    });
+
+    $('#reset-settings-btn').addEventListener('click', () => {
+      settings = { ...defaultSettings };
+      saveLS(LS_KEYS.SETTINGS, settings);
+      toggleConfettiEl.checked = settings.confetti;
+      toggleSoundEl.checked = settings.sound;
+      toggleThemeEl.checked = settings.dark;
+      document.body.classList.toggle('dark', settings.dark);
+      toast('Settings reset.');
+    });
+
+    /* *****************************************************************************************
+       TOAST (lightweight)
+    ***************************************************************************************** */
+    function toast(msg) {
+      const t = document.createElement('div');
+      t.textContent = msg;
+      t.className = 'fixed bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg bg-black/70 text-gray-100 text-sm shadow';
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 1600);
+    }
+
+    /* *****************************************************************************************
+       TASKS + PROGRESS
+       ------------------------------------------------------------------------------------------
+       - Collect all tasks (checkboxes) and persist checked state in localStorage.
+       - Update the circular ring, top progress bar, stats, skill bars, per-day badges.
+       - On any change, also append to HISTORY with timestamp (for mini chart).
+    ***************************************************************************************** */
+    const tasks = $all('.task');
+    const dayCards = $all('#tasks article.card');
+    const circle = $('.progress-ring__circle');
+    const radius = circle.r.baseVal.value;
+    const circumference = 2 * Math.PI * radius;
+    circle.style.strokeDasharray = `${circumference} ${circumference}`;
+    circle.style.strokeDashoffset = circumference;
+    const progressText = $('#progress-text');
+    const topProgressBar = $('#top-progress-bar');
+
+    // Restore progress state
+    const savedProgress = loadLS(LS_KEYS.PROGRESS, null);
+    if (savedProgress && Array.isArray(savedProgress)) {
+      tasks.forEach((task, i) => task.checked = !!savedProgress[i]);
+    }
+
+    // Visual fade-in for cards on load
+    setTimeout(() => $all('.card').forEach(c => c.classList.add('show')), 50);
+
+    function setProgress(percent) {
+      const offset = circumference - percent/100 * circumference;
+      circle.style.strokeDashoffset = offset;
+      progressText.textContent = `${percent}%`;
+      topProgressBar.style.width = percent + "%";
+    }
+
+    function overallPercent() {
+      const checked = tasks.filter(t => t.checked).length;
+      return Math.round((checked / tasks.length) * 100);
+    }
+
+    function updateStatsUI() {
+      const checked = tasks.filter(t => t.checked).length;
+      $('#tasks-completed').textContent = checked;
+      $('#overall-progress').textContent = overallPercent() + "%";
+    }
+
+    function showDayBadgesAndCelebrate() {
+      // If all tasks in a given day card are checked, show badge and maybe confetti + sound
+      dayCards.forEach(card => {
+        const boxes = $all('.task', card); // not supported; so simpler:
+      });
+      // Using safer query logic:
+      dayCards.forEach(card => {
+        const boxes = Array.from(card.querySelectorAll('.task'));
+        const badge = card.querySelector('.complete-badge');
+        const complete = (boxes.length > 0 && boxes.every(b => b.checked));
+        badge?.classList.toggle('show', complete);
+
+        // Fire confetti when a card becomes complete (event-driven)
+        if (complete && !card.dataset._celebrated) {
+          if (settings.confetti) launchConfetti(800);
+          if (settings.sound) playDing();
+          // increment streak day once per card/day completion
+          incrementStreakForToday(card);
+          card.dataset._celebrated = '1';
+        }
+        if (!complete && card.dataset._celebrated) {
+          // rollback celebration marker if user unchecks (allows re-celebration)
+          card.dataset._celebrated = '';
+        }
+      });
+    }
+
+    function saveProgress() {
+      saveLS(LS_KEYS.PROGRESS, tasks.map(t => !!t.checked));
+    }
+
+    function recordHistory() {
+      const pct = overallPercent();
+      let history = loadLS(LS_KEYS.HISTORY, []);
+      // only record if last point is different to keep it tidy
+      const last = history[history.length - 1];
+      if (!last || last.pct !== pct) {
+        history.push({ ts: Date.now(), pct });
+        // keep only the last 50 points
+        if (history.length > 50) history = history.slice(history.length - 50);
+        saveLS(LS_KEYS.HISTORY, history);
+      }
+      renderHistoryChart();
+    }
+
+    function updateAll() {
+      const pct = overallPercent();
+      setProgress(pct);
+      updateStatsUI();
+      saveProgress();
+      showDayBadgesAndCelebrate();
+      computeSkillBreakdown();
+      recordHistory();
+
+      // If 100% overall
+      if (pct === 100 && !document.body.dataset._allCelebrated) {
+        if (settings.confetti) launchConfetti(2000);
+        if (settings.sound) playDing();
+        toast('Incredible — 100% complete!');
+        document.body.dataset._allCelebrated = '1';
+      }
+      if (pct < 100 && document.body.dataset._allCelebrated) {
+        document.body.dataset._allCelebrated = '';
+      }
+    }
+
+    // Attach event listeners
+    tasks.forEach(task => task.addEventListener('change', updateAll));
+
+    // Initial compute on load
+    updateAll();
+
+    /* *****************************************************************************************
+       DAYS LEFT (to Sept 13, 2025)
+    ***************************************************************************************** */
+    (function computeDaysLeft(){
+      const today = new Date();
+      const examDay = new Date("2025-09-13T23:59:59"); // end of day buffer
+      const diff = Math.ceil((examDay - today) / (1000*60*60*24));
+      $('#days-left').textContent = diff > 0 ? diff : 0;
+    })();
+
+    /* *****************************************************************************************
+       STREAK LOGIC
+       ------------------------------------------------------------------------------------------
+       - Simple interpretation: whenever a day card reaches full completion,
+         we increment the "streak" *if that day hasn't been counted today*.
+       - For a real “consecutive calendar days” streak, you'd track dates where
+         any card got fully completed that date. This simplified approach encourages daily wins.
+    ***************************************************************************************** */
+    let streak = parseInt(loadLS(LS_KEYS.STREAK, 0)) || 0;
+    $('#streak-counter').textContent = `${streak} days`;
+    renderStreakDots(streak);
+
+    function incrementStreakForToday(card) {
+      // We mark that today's date contributed to streak once.
+      const todayKey = `streak-day-${new Date().toISOString().slice(0,10)}`;
+      if (!localStorage.getItem(todayKey)) {
+        streak++;
+        saveLS(LS_KEYS.STREAK, streak);
+        localStorage.setItem(todayKey, '1');
+        $('#streak-counter').textContent = `${streak} days`;
+        renderStreakDots(streak);
+      }
+    }
+
+    function renderStreakDots(n) {
+      const container = $('#streak-dots');
+      container.innerHTML = '';
+      const toShow = Math.min(n, 12); // show up to 12 dots
+      for (let i = 0; i < toShow; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'w-3 h-3 rounded-full bg-gradient-to-br from-cyan-400 to-fuchsia-400 shadow-neon';
+        container.appendChild(dot);
+      }
+      if (n > 12) {
+        const more = document.createElement('span');
+        more.className = 'text-xs text-gray-400 ml-2';
+        more.textContent = `+${n-12} more`;
+        container.appendChild(more);
+      }
+    }
+
+    /* *****************************************************************************************
+       SKILL BREAKDOWN
+       ------------------------------------------------------------------------------------------
+       - For each card we read data-category (Writing/Speaking/Reading/Mock/Exam).
+       - Compute per-category %: (#checked in category) / (total tasks in category) * 100.
+       - Update mini bars and their labels.
+    ***************************************************************************************** */
+    function computeSkillBreakdown(){
+      const categories = ['Writing','Speaking','Reading','Mock','Exam'];
+      const totals = { Writing:0, Speaking:0, Reading:0, Mock:0, Exam:0 };
+      const done   = { Writing:0, Speaking:0, Reading:0, Mock:0, Exam:0 };
+
+      dayCards.forEach(card => {
+        const cat = card.dataset.category;
+        if (!cat || !totals.hasOwnProperty(cat)) return;
+        const boxes = Array.from(card.querySelectorAll('.task'));
+        totals[cat] += boxes.length;
+        done[cat]   += boxes.filter(b => b.checked).length;
+      });
+
+      // Helper to update a single row (bar + text)
+      const upd = (cat, idBar, idPct) => {
+        const pct = totals[cat] ? Math.round((done[cat] / totals[cat]) * 100) : 0;
+        $(idBar).style.width = pct + '%';
+        $(idPct).textContent = pct + '%';
+      };
+      upd('Writing',  '#wrt-bar', '#wrt-pct');
+      upd('Speaking', '#spk-bar', '#spk-pct');
+      upd('Reading',  '#rdg-bar', '#rdg-pct');
+      upd('Mock',     '#mk-bar',  '#mk-pct');
+      upd('Exam',     '#ex-bar',  '#ex-pct');
+    }
+
+    /* *****************************************************************************************
+       PROGRESS HISTORY MINI CHART
+       ------------------------------------------------------------------------------------------
+       - HISTORY holds up to the last 50 samples {ts, pct}.
+       - We render the last 14 samples as bars (height = %).
+    ***************************************************************************************** */
+    function renderHistoryChart(){
+      const wrap = $('#history-bars');
+      let history = loadLS(LS_KEYS.HISTORY, []);
+      const last14 = history.slice(-14);
+      wrap.innerHTML = '';
+      last14.forEach(h => {
+        const bar = document.createElement('div');
+        bar.className = 'bar';
+        bar.style.height = (h.pct || 0) + '%';
+        bar.title = `Progress: ${h.pct}%`;
+        wrap.appendChild(bar);
+      });
+      // If not enough points, pad with 0s
+      for (let i = last14.length; i < 14; i++) {
+        const bar = document.createElement('div');
+        bar.className = 'bar';
+        bar.style.height = '0%';
+        wrap.appendChild(bar);
+      }
+    }
+
+    /* *****************************************************************************************
+       CONFETTI (Vanilla)
+       ------------------------------------------------------------------------------------------
+       - Lightweight confetti made of small div circles and sparkles.
+       - Duration param in ms.
+    ***************************************************************************************** */
+    function launchConfetti(duration = 1500) {
+      const end = Date.now() + duration;
+      (function frame() {
+        const colors = ["#22d3ee", "#f472b6", "#4ade80", "#fde047", "#a78bfa"];
+        // Create multiple pieces per frame (kept small)
+        for (let i = 0; i < 8; i++) {
+          const confetti = document.createElement("div");
+          confetti.style.position = "fixed";
+          confetti.style.width = Math.random() > .7 ? "8px" : "6px";
+          confetti.style.height = confetti.style.width;
+          confetti.style.borderRadius = "50%";
+          confetti.style.left = Math.random() * 100 + "vw";
+          confetti.style.top = "-10px";
+          confetti.style.background = colors[Math.floor(Math.random()*colors.length)];
+          confetti.style.opacity = 0.85;
+          confetti.style.zIndex = 9999;
+          confetti.style.transform = `translateX(0)`;
+          document.body.appendChild(confetti);
+          let speed = 2 + Math.random() * 5;
+          let drift = (Math.random() - 0.5) * 2;
+          let fall = setInterval(() => {
+            const top = parseFloat(confetti.style.top);
+            const left = parseFloat(confetti.style.left);
+            confetti.style.top = (top + speed) + "px";
+            confetti.style.left = (left + drift) + "px";
+            if (top > window.innerHeight + 20) {
+              confetti.remove(); clearInterval(fall);
+            }
+          }, 16);
+        }
+
+        // sparkles
+        if (Math.random() > .6) {
+          const sparkle = document.createElement('div');
+          sparkle.textContent = '✨';
+          sparkle.style.position = 'fixed';
+          sparkle.style.left = Math.random() * 100 + 'vw';
+          sparkle.style.top = Math.random() * 30 + 'vh';
+          sparkle.style.fontSize = '14px';
+          sparkle.style.opacity = .9;
+          sparkle.style.zIndex = 9999;
+          document.body.appendChild(sparkle);
+          setTimeout(() => sparkle.remove(), 700);
+        }
+
+        if (Date.now() < end) requestAnimationFrame(frame);
+      }());
+    }
+
+    /* *****************************************************************************************
+       SOUND (Web Audio API)
+       ------------------------------------------------------------------------------------------
+       - Small "ding" when a day completes or 100% overall.
+       - Kept short and pleasant.
+    ***************************************************************************************** */
+    function playDing() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'sine';
+        o.frequency.value = 880; // A5
+        o.connect(g); g.connect(ctx.destination);
+        g.gain.setValueAtTime(0.0001, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime + 0.01);
+        o.start();
+        o.stop(ctx.currentTime + 0.12);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.12);
+      } catch(e) {
+        /* ignore audio errors on older browsers */
+      }
+    }
+
+    /* *****************************************************************************************
+       QUOTES WIDGET
+       ------------------------------------------------------------------------------------------
+       - 30+ quotes randomized on load and on button click with fade transition.
+    ***************************************************************************************** */
+    const quotes = [
+      "Consistency beats intensity.",
+      "One step at a time is still progress.",
+      "Discipline is remembering what you want.",
+      "Your future self will thank you.",
+      "Push yourself; no one else will do it for you.",
+      "Small wins compound into big results.",
+      "Focus on habits, not outcomes.",
+      "Done is better than perfect.",
+      "Your effort today becomes confidence tomorrow.",
+      "You don’t have to be extreme — just consistent.",
+      "Clarity comes from action.",
+      "Mastery is built on repetition.",
+      "You are what you repeatedly do.",
+      "Progress over perfection.",
+      "Trust the process.",
+      "Start where you are; use what you have.",
+      "Energy follows focus.",
+      "Momentum is a choice.",
+      "Be the hardest worker in the room.",
+      "Skill is earned, not given.",
+      "Your only limit is you.",
+      "Make it a pattern, not a push.",
+      "Show up for your future self.",
+      "Every practice session writes your story.",
+      "Comfort is a slow killer.",
+      "Tiny improvements daily beat massive bursts.",
+      "If it matters, schedule it.",
+      "Consistency creates clarity.",
+      "Preparation is a superpower.",
+      "Keep the promise you made to yourself."
+    ];
+    function setQuote(q) {
+      const el = $('#quote');
+      el.classList.remove('fade-enter-active');
+      el.classList.add('fade-enter');
+      setTimeout(() => {
+        el.textContent = q;
+        el.classList.remove('fade-enter');
+        el.classList.add('fade-enter-active');
+      }, 40);
+    }
+    function newQuote() {
+      const q = quotes[Math.floor(Math.random()*quotes.length)];
+      setQuote(q);
+    }
+    $('#new-quote-btn').addEventListener('click', newQuote);
+    // initial quote
+    newQuote();
+
+    /* *****************************************************************************************
+       JOURNAL
+       ------------------------------------------------------------------------------------------
+       - Textarea auto-saves to localStorage every input event.
+       - "Save as New Entry" records timestamped snapshots in JOURNAL_ENTRIES.
+       - Last 3 entries are displayed in a simple timeline view.
+    ***************************************************************************************** */
+    const journal = $('#journal');
+    const savedText = loadLS(LS_KEYS.JOURNAL_TEXT, "");
+    journal.value = savedText || "";
+    journal.addEventListener('input', () => {
+      saveLS(LS_KEYS.JOURNAL_TEXT, journal.value);
+    });
+
+    $('#save-entry-btn').addEventListener('click', () => {
+      const entries = loadLS(LS_KEYS.JOURNAL_ENTRIES, []);
+      if (!journal.value.trim()) { toast("Write something before saving!"); return; }
+      entries.push({ ts: Date.now(), text: journal.value.trim() });
+      saveLS(LS_KEYS.JOURNAL_ENTRIES, entries);
+      renderJournalHistory();
+      toast('Entry saved!');
+    });
+
+    function renderJournalHistory() {
+      const container = $('#journal-history');
+      const entries = loadLS(LS_KEYS.JOURNAL_ENTRIES, []);
+      const last3 = entries.slice(-3).reverse(); // newest first
+      container.innerHTML = '';
+      if (last3.length === 0) {
+        container.innerHTML = '<p class="text-sm text-gray-400">No entries yet. Your latest 3 will show here.</p>';
+        return;
+      }
+      last3.forEach(e => {
+        const d = new Date(e.ts);
+        const item = document.createElement('div');
+        item.className = 'p-3 rounded-lg bg-white/5 border border-white/10';
+        item.innerHTML = `
+          <div class="text-xs text-gray-400">${d.toLocaleString()}</div>
+          <div class="mt-1 text-sm text-gray-200 whitespace-pre-wrap">${escapeHTML(e.text)}</div>
+        `;
+        container.appendChild(item);
+      });
+    }
+    function escapeHTML(s){ return s.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
+    // initial render
+    renderJournalHistory();
+
+    $('#reset-journal-btn').addEventListener('click', () => {
+      localStorage.removeItem(LS_KEYS.JOURNAL_TEXT);
+      localStorage.removeItem(LS_KEYS.JOURNAL_ENTRIES);
+      journal.value = '';
+      renderJournalHistory();
+      toast('Journal cleared.');
+    });
+
+    /* *****************************************************************************************
+       SIDEBAR INTERACTION
+       ------------------------------------------------------------------------------------------
+       - Mobile hamburger toggles sidebar.
+       - Active link highlights based on section in view (IntersectionObserver).
+    ***************************************************************************************** */
+    const sidebar = $('#sidebar');
+    $('#openSidebarBtn')?.addEventListener('click', () => {
+      sidebar.classList.toggle('hidden');
+    });
+    // Hide after clicking a link on mobile
+    $all('#sidebar nav a').forEach(a => a.addEventListener('click', () => {
+      if (window.innerWidth < 1024) sidebar.classList.add('hidden');
+    }));
+
+    // Active link on scroll
+    const sectionIds = ['dashboard','tasks','calendar','progress','notes','settings'];
+    const sections = sectionIds.map(id => document.getElementById(id));
+    const navLinks = sectionIds.map(id => document.querySelector(`#sidebar a[data-link="${id}"]`));
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        const id = entry.target.id;
+        const link = document.querySelector(`#sidebar a[data-link="${id}"]`);
+        if (entry.isIntersecting) {
+          navLinks.forEach(l => l?.classList.remove('active'));
+          link?.classList.add('active');
+        }
+      });
+    }, { rootMargin: '-45% 0px -45% 0px', threshold: 0.01 });
+    sections.forEach(sec => sec && obs.observe(sec));
+
+    /* *****************************************************************************************
+       RESET BUTTONS
+    ***************************************************************************************** */
+    $('#reset-progress-btn').addEventListener('click', () => {
+      localStorage.removeItem(LS_KEYS.PROGRESS);
+      localStorage.removeItem(LS_KEYS.STREAK);
+      localStorage.removeItem(LS_KEYS.HISTORY);
+      // Also remove per-day "todayKey" streak flags
+      Object.keys(localStorage).forEach(k => { if (k.startsWith('streak-day-')) localStorage.removeItem(k); });
+      tasks.forEach(t => t.checked = false);
+      streak = 0;
+      $('#streak-counter').textContent = `${streak} days`;
+      renderStreakDots(streak);
+      updateAll();
+      toast('All progress reset.');
+    });
+
+    /* *****************************************************************************************
+       HISTORY INITIALIZATION (ensure chart appears even if empty)
+    ***************************************************************************************** */
+    renderHistoryChart();
+
+    /* *****************************************************************************************
+       EXTRA: small helper to add querySelectorAll within container (optional)
+       (We used a simpler approach above for compatibility — left here as a pattern.)
+    ***************************************************************************************** */
+    // HTMLElement.prototype.$all = function(sel){ return Array.from(this.querySelectorAll(sel)); };
+
+  </script>
+
+  <!-- ===================================================================================
+       END OF FILE
+       This HTML is intentionally verbose with comments, helper notes, and clear structure.
+       Feel free to trim comments if you want a smaller file for production deploys.
+  ===================================================================================== -->
 </body>
 </html>
