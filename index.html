@@ -3,79 +3,167 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CELPIP 12 Prep Calendar — F1 Edition</title>
+  <title>CELPIP 12 Prep Tracker — IMAX Theme</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* Background racetrack lines */
     body {
-      background: repeating-linear-gradient(
-        to right,
-        #1e1e1e,
-        #1e1e1e 40px,
-        #2d2d2d 40px,
-        #2d2d2d 80px
-      );
+      background: radial-gradient(circle at top, #0f172a, #020617);
+      color: #f8fafc;
+      font-family: 'Inter', sans-serif;
     }
-    /* F1 car animation */
-    .f1-car {
-      position: absolute;
-      top: 20px;
-      left: -100px;
-      width: 80px;
-      animation: drive 12s linear infinite;
+    .glow {
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.15);
     }
-    @keyframes drive {
-      from { left: -100px; }
-      to { left: 110%; }
+    .progress-ring {
+      transform: rotate(-90deg);
     }
-    /* Checklist aesthetic */
-    input[type="checkbox"] {
-      accent-color: #ef4444; /* Tailwind red-500 */
-      transform: scale(1.2);
-      cursor: pointer;
+    .progress-ring__circle {
+      transition: 0.35s stroke-dasharray;
+      transform: rotate(0.25turn);
+      transform-origin: center;
     }
   </style>
 </head>
-<body class="text-gray-100">
-  <!-- F1 Car Animation -->
-  <img src="https://i.ibb.co/3p1nq7s/f1-car.png" alt="F1 Car" class="f1-car">
+<body class="min-h-screen flex flex-col">
 
   <!-- Header -->
-  <header class="bg-gradient-to-r from-red-600 via-red-500 to-orange-500 text-white p-6 shadow-lg text-center">
-    <h1 class="text-3xl font-bold tracking-wide">CELPIP 12 Prep Calendar 🏎️</h1>
-    <p class="text-sm">Aug 26 – Sept 13, 2025 | Final Lap: Exam Day Sept 13</p>
+  <header class="p-6 text-center">
+    <h1 class="text-4xl font-extrabold bg-gradient-to-r from-indigo-400 via-cyan-400 to-teal-300 bg-clip-text text-transparent">
+      CELPIP 12 Prep Tracker
+    </h1>
+    <p class="text-gray-400 mt-2 text-lg">Aug 26 – Sept 13, 2025 | Final Goal: Exam Ready 🎯</p>
   </header>
 
-  <!-- Calendar Grid -->
-  <main class="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-    
-    <!-- Example Day -->
-    <div class="bg-white/10 backdrop-blur-md rounded-2xl shadow-lg p-4 hover:scale-105 transition transform duration-300" id="day-aug26">
-      <h2 class="text-lg font-semibold text-red-400">Aug 26 (Day 1)</h2>
-      <ul class="mt-3 space-y-2 text-sm">
-        <li><label><input type="checkbox" class="task"> 📝 Writing: Task 1 Email</label></li>
-        <li><label><input type="checkbox" class="task"> 🎙 Speaking: 3 prompts</label></li>
+  <!-- Progress Visual -->
+  <section class="flex justify-center items-center mt-6 relative">
+    <svg class="progress-ring w-40 h-40" viewBox="0 0 120 120">
+      <circle class="text-gray-700" stroke="currentColor" stroke-width="12" fill="transparent" r="54" cx="60" cy="60"/>
+      <circle class="progress-ring__circle text-cyan-400" stroke="currentColor" stroke-width="12" stroke-linecap="round" fill="transparent" r="54" cx="60" cy="60"
+        stroke-dasharray="0 339.292"/>
+    </svg>
+    <div class="absolute text-center">
+      <p class="text-3xl font-bold" id="progress-text">0%</p>
+      <p class="text-sm text-gray-400">Exam Readiness</p>
+    </div>
+  </section>
+
+  <!-- Daily Checklist -->
+  <main class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+
+    <!-- Aug 26 -->
+    <div class="bg-white/10 rounded-2xl p-6 glow hover:scale-105 transition">
+      <h2 class="text-xl font-semibold text-cyan-300">Aug 26 (Day 1)</h2>
+      <ul class="mt-4 space-y-3 text-sm">
+        <li><label><input type="checkbox" class="task"> 📝 Writing: Task 1 Email (tone, connectors)</label></li>
+        <li><label><input type="checkbox" class="task"> 🎙 Speaking: 3 prompts (describe, opinion, compare)</label></li>
+        <li><label><input type="checkbox" class="task"> 📖 Reading: 2 inference passages</label></li>
+        <li><label><input type="checkbox" class="task"> 🎧 Listening: CBC podcast summary</label></li>
+      </ul>
+    </div>
+
+    <!-- Aug 27 -->
+    <div class="bg-white/10 rounded-2xl p-6 glow hover:scale-105 transition">
+      <h2 class="text-xl font-semibold text-cyan-300">Aug 27 (Day 2)</h2>
+      <ul class="mt-4 space-y-3 text-sm">
+        <li><label><input type="checkbox" class="task"> 📝 Writing: Task 2 Opinion essay</label></li>
+        <li><label><input type="checkbox" class="task"> 🎙 Speaking: 3 prompts (storytelling)</label></li>
+        <li><label><input type="checkbox" class="task"> 📖 Reading: Identify author’s tone</label></li>
+        <li><label><input type="checkbox" class="task"> 🎧 Listening: NPR → implied meaning</label></li>
+      </ul>
+    </div>
+
+    <!-- Aug 28 -->
+    <div class="bg-white/10 rounded-2xl p-6 glow hover:scale-105 transition">
+      <h2 class="text-xl font-semibold text-cyan-300">Aug 28 (Day 3)</h2>
+      <ul class="mt-4 space-y-3 text-sm">
+        <li><label><input type="checkbox" class="task"> 📝 Writing: Task 1 Email (timed 27 mins)</label></li>
+        <li><label><input type="checkbox" class="task"> 🎙 Speaking: 4 prompts (connectors focus)</label></li>
+        <li><label><input type="checkbox" class="task"> 📖 Reading: Inference drill</label></li>
+        <li><label><input type="checkbox" class="task"> 🎧 Listening: Debate → bias detection</label></li>
+      </ul>
+    </div>
+
+    <!-- Aug 29 -->
+    <div class="bg-white/10 rounded-2xl p-6 glow hover:scale-105 transition">
+      <h2 class="text-xl font-semibold text-cyan-300">Aug 29 (Day 4)</h2>
+      <ul class="mt-4 space-y-3 text-sm">
+        <li><label><input type="checkbox" class="task"> 📝 Writing: Task 2 Opinion essay (timed)</label></li>
+        <li><label><input type="checkbox" class="task"> 🎙 Speaking: 3 prompts with counterarguments</label></li>
+        <li><label><input type="checkbox" class="task"> 📖 Reading: Long passage summary</label></li>
+        <li><label><input type="checkbox" class="task"> 🎧 Listening: Political podcast nuance</label></li>
+      </ul>
+    </div>
+
+    <!-- Aug 30 -->
+    <div class="bg-white/10 rounded-2xl p-6 glow hover:scale-105 transition">
+      <h2 class="text-xl font-semibold text-cyan-300">Aug 30 (Day 5)</h2>
+      <ul class="mt-4 space-y-3 text-sm">
+        <li><label><input type="checkbox" class="task"> 📝 Writing: Task 1 Email (timed)</label></li>
+        <li><label><input type="checkbox" class="task"> 🎙 Speaking: 4 prompts (fluent delivery)</label></li>
+        <li><label><input type="checkbox" class="task"> 📖 Reading: Skimming practice</label></li>
+        <li><label><input type="checkbox" class="task"> 🎧 Listening: Academic lecture summary</label></li>
+      </ul>
+    </div>
+
+    <!-- Aug 31 -->
+    <div class="bg-white/10 rounded-2xl p-6 glow hover:scale-105 transition">
+      <h2 class="text-xl font-semibold text-cyan-300">Aug 31 (Day 6)</h2>
+      <ul class="mt-4 space-y-3 text-sm">
+        <li><label><input type="checkbox" class="task"> 📝 Writing: Full Task 1 + Task 2 back-to-back</label></li>
+        <li><label><input type="checkbox" class="task"> 🎙 Speaking: 5 prompts (review recordings)</label></li>
+        <li><label><input type="checkbox" class="task"> 📖 Reading: Inference Qs</label></li>
+        <li><label><input type="checkbox" class="task"> 🎧 Listening: Speaker bias detection</label></li>
+      </ul>
+    </div>
+
+    <!-- Sept 1 -->
+    <div class="bg-white/10 rounded-2xl p-6 glow hover:scale-105 transition">
+      <h2 class="text-xl font-semibold text-cyan-300">Sept 1 (Day 7)</h2>
+      <ul class="mt-4 space-y-3 text-sm">
+        <li><label><input type="checkbox" class="task"> 📝 Writing: Full timed Task 1 + 2</label></li>
+        <li><label><input type="checkbox" class="task"> 🎙 Speaking: 6 prompts timed</label></li>
+        <li><label><input type="checkbox" class="task"> 📖 Reading: Author assumption drills</label></li>
+        <li><label><input type="checkbox" class="task"> 🎧 Listening: Mock section</label></li>
+      </ul>
+    </div>
+
+    <!-- Sept 2–6 follow same structure -->
+    <div class="bg-white/10 rounded-2xl p-6 glow hover:scale-105 transition">
+      <h2 class="text-xl font-semibold text-cyan-300">Sept 2 (Day 8)</h2>
+      <ul class="mt-4 space-y-3 text-sm">
+        <li><label><input type="checkbox" class="task"> 📝 Writing: Task 1 (formal email)</label></li>
+        <li><label><input type="checkbox" class="task"> 🎙 Speaking: 3 prompts (counterargument)</label></li>
+        <li><label><input type="checkbox" class="task"> 📖 Reading: Inference practice</label></li>
+        <li><label><input type="checkbox" class="task"> 🎧 Listening: Long clip summary</label></li>
+      </ul>
+    </div>
+
+    <!-- Sept 7 MOCK -->
+    <div class="bg-white/10 rounded-2xl p-6 border-2 border-yellow-400 glow hover:scale-105 transition">
+      <h2 class="text-xl font-semibold text-yellow-300">Sept 7 (Mock Test)</h2>
+      <ul class="mt-4 space-y-3 text-sm">
+        <li><label><input type="checkbox" class="task"> ✅ Full CELPIP Mock (all 4 skills)</label></li>
+        <li><label><input type="checkbox" class="task"> 📊 Review & build error log</label></li>
+      </ul>
+    </div>
+
+    <!-- Sept 8–12 -->
+    <div class="bg-white/10 rounded-2xl p-6 glow hover:scale-105 transition">
+      <h2 class="text-xl font-semibold text-cyan-300">Sept 10 (Mini Mock)</h2>
+      <ul class="mt-4 space-y-3 text-sm">
+        <li><label><input type="checkbox" class="task"> 📝 Mini Mock: Writing + Speaking</label></li>
         <li><label><input type="checkbox" class="task"> 📖 Reading: 2 passages</label></li>
-        <li><label><input type="checkbox" class="task"> 🎧 Listening: CBC podcast</label></li>
+        <li><label><input type="checkbox" class="task"> 🎧 Listening: Practice test</label></li>
       </ul>
     </div>
 
-    <!-- Another Day -->
-    <div class="bg-white/10 rounded-2xl shadow-lg p-4 hover:scale-105 transition transform duration-300" id="day-sept7">
-      <h2 class="text-lg font-semibold text-yellow-400">Sept 7 (Mock Test)</h2>
-      <ul class="mt-3 space-y-2 text-sm">
-        <li><label><input type="checkbox" class="task"> ✅ Full CELPIP Mock (all skills)</label></li>
-        <li><label><input type="checkbox" class="task"> 📊 Review & error log</label></li>
-      </ul>
-    </div>
-
-    <!-- Exam Day -->
-    <div class="bg-white/10 rounded-2xl shadow-lg p-4 border-2 border-green-500 hover:scale-105 transition transform duration-300" id="day-sept13">
-      <h2 class="text-lg font-semibold text-green-400">Sept 13 (Exam Day)</h2>
-      <ul class="mt-3 space-y-2 text-sm">
+    <!-- Sept 13 EXAM -->
+    <div class="bg-white/10 border-2 border-green-400 rounded-2xl p-6 glow hover:scale-105 transition">
+      <h2 class="text-xl font-semibold text-green-300">Sept 13 (Exam Day)</h2>
+      <ul class="mt-4 space-y-3 text-sm">
         <li><label><input type="checkbox" class="task"> ⚡ Light warm-up only</label></li>
         <li><label><input type="checkbox" class="task"> 🎙 2 short speaking warm-ups</label></li>
-        <li><label><input type="checkbox" class="task"> 📖 Review connectors</label></li>
+        <li><label><input type="checkbox" class="task"> 📖 Review connectors list</label></li>
         <li><label><input type="checkbox" class="task"> 💧 Rest & hydrate</label></li>
       </ul>
     </div>
@@ -83,19 +171,45 @@
   </main>
 
   <!-- Footer -->
-  <footer class="text-center text-gray-400 text-sm mt-10 mb-4">
-    © 2025 Mohamed Ansar | Built F1 Style with Tailwind 🚀
+  <footer class="text-center text-gray-500 text-sm mt-8 mb-4">
+    © 2025 Mohamed Ansar | IMAX Prep Mode 🚀
   </footer>
 
-  <!-- JS for saving checklist progress -->
+  <!-- JS for checklist + progress -->
   <script>
-    document.querySelectorAll('.task').forEach((checkbox, i) => {
-      const key = "task-" + i;
-      checkbox.checked = localStorage.getItem(key) === "true";
-      checkbox.addEventListener("change", () => {
-        localStorage.setItem(key, checkbox.checked);
+    const tasks = document.querySelectorAll('.task');
+    const circle = document.querySelector('.progress-ring__circle');
+    const radius = circle.r.baseVal.value;
+    const circumference = 2 * Math.PI * radius;
+    circle.style.strokeDasharray = `${circumference} ${circumference}`;
+    circle.style.strokeDashoffset = circumference;
+
+    const progressText = document.getElementById('progress-text');
+
+    function setProgress(percent) {
+      const offset = circumference - percent / 100 * circumference;
+      circle.style.strokeDashoffset = offset;
+      progressText.textContent = `${percent}%`;
+    }
+
+    function updateProgress() {
+      let checked = 0;
+      tasks.forEach(task => {
+        if (task.checked) checked++;
       });
-    });
+      const percent = Math.round((checked / tasks.length) * 100);
+      setProgress(percent);
+      localStorage.setItem('celpip-progress', JSON.stringify([...tasks].map(t => t.checked)));
+    }
+
+    // Load progress
+    const saved = JSON.parse(localStorage.getItem('celpip-progress'));
+    if (saved) {
+      tasks.forEach((task, i) => task.checked = saved[i]);
+    }
+    updateProgress();
+
+    tasks.forEach(task => task.addEventListener('change', updateProgress));
   </script>
 </body>
 </html>
